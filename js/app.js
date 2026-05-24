@@ -857,50 +857,79 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
   const charStatus = charCount <= 300 ? '✅ 適中' : charCount <= 500 ? '⚠️ 偏長' : '❌ 過長';
 
   resultsEl.innerHTML = `
-    <!-- Step 2: AI 寫初稿 -->
+    <!-- AI 寫初稿 + 查核結果 -->
     <div class="flow-step-card">
       <div class="flow-step-header">
-        <span class="flow-step-badge ai">AI 寫初稿</span>
-        <span class="flow-step-status">✅ Threads 文案</span>
+        <span class="flow-step-badge ai">AI 初稿（已查核）</span>
+        <span class="flow-step-status">字數 ${charCount} ${charStatus}</span>
       </div>
       <div class="result-content copy-output">${copy.replace(/\n/g, '<br>')}</div>
-      <div class="flow-step-meta">字數 ${charCount} ${charStatus} · ${pillar}${format ? ' · ' + format : ''}</div>
+      <div class="flow-step-meta">${pillar}${format ? ' · ' + format : ''}</div>
     </div>
 
-    <!-- Step 2: 寫作技巧分析 -->
+    <!-- 檢測結果 -->
     <div class="flow-step-card">
       <div class="flow-step-header">
-        <span class="flow-step-badge check">技巧檢測</span>
+        <span class="flow-step-badge check">檢測結果</span>
       </div>
       <div class="flow-step-checks">
-        <div class="flow-check-title">套用的寫作技巧</div>
+        <div class="flow-check-title">套用技巧</div>
         <ul>${techniques.map(t => `<li>✅ ${t}</li>`).join('')}</ul>
         <div class="flow-check-title" style="margin-top:12px;">AI 味檢測（${passCount}/${aiChecks.length}）</div>
         <ul>${aiChecks.map(c => `<li>${c.pass ? '✅' : '⚠️'} ${c.label}</li>`).join('')}</ul>
       </div>
     </div>
 
-    <!-- Step 3: 你的行動 -->
+    <!-- 修改建議 -->
     <div class="flow-step-card">
       <div class="flow-step-header">
-        <span class="flow-step-badge you">你來定魂</span>
+        <span class="flow-step-badge you">修改建議</span>
       </div>
       <div class="flow-step-suggestions">
-        <p><strong>建議你修改的地方：</strong></p>
         <ul>
-          <li>🖊️ <strong>重寫開頭</strong> — 用你的真實場景替換 AI 的開頭，加入個人經驗</li>
-          <li>🖊️ <strong>重寫結尾</strong> — 最後一句從你的靈魂長出來，不是 AI 語料庫輸出</li>
-          <li>🔍 <strong>加入細節</strong> — 補上具體的人/地點/時間/數字，消滅 AI 感</li>
-          <li>📖 <strong>大聲讀一遍</strong> — 不像你說話就繼續改</li>
+          <li>🖊️ <strong>重寫開頭</strong> — 用你的真實場景替換，加入個人經驗</li>
+          <li>🖊️ <strong>重寫結尾</strong> — 最後一句從你的靈魂長出來</li>
+          <li>🔍 <strong>加入細節</strong> — 補上具體的人/地點/時間/數字</li>
         </ul>
       </div>
+    </div>
+
+    <!-- 操作按鈕（類似 Discord） -->
+    <div class="flow-step-card">
+      <div class="flow-step-header">
+        <span class="flow-step-badge you">下一步</span>
+      </div>
       <div class="copy-actions">
-        <button class="btn btn-primary btn-copy" onclick="navigator.clipboard.writeText(this.closest('.flow-step-card').parentElement.querySelector('.copy-output').innerText);this.innerHTML='✅ 已複製';setTimeout(()=>this.innerHTML='📋 複製文案',1500)">📋 複製文案</button>
+        <button class="btn btn-primary btn-copy" onclick="navigator.clipboard.writeText(document.querySelector('.copy-output').innerText);this.innerHTML='✅ 已複製';setTimeout(()=>this.innerHTML='📋 複製文案',1500)">📋 複製文案</button>
+        <button class="btn btn-outline" id="btnRewriteCopy">✏️ 我要修改</button>
         <button class="btn btn-outline" onclick="switchPage('carousel')">📱 轉輪播</button>
         <button class="btn btn-outline" onclick="switchPage('schedule')">📅 排入排程</button>
       </div>
     </div>
   `;
+
+  // 「我要修改」按鈕：展開編輯區
+  document.getElementById('btnRewriteCopy')?.addEventListener('click', () => {
+    const editArea = document.createElement('div');
+    editArea.className = 'flow-step-card';
+    editArea.innerHTML = '<div class="flow-step-header"><span class="flow-step-badge you">編輯文案</span></div>'
+      + '<textarea class="tool-textarea" id="editCopyArea" style="min-height:200px;">' + currentCopy + '</textarea>'
+      + '<div class="copy-actions" style="margin-top:8px;">'
+      + '<button class="btn btn-primary" id="saveCopyEdit">💾 儲存修改</button>'
+      + '<button class="btn btn-outline" id="aiCheckEdit">🔍 AI 重新查核</button>'
+      + '</div>';
+    resultsEl.appendChild(editArea);
+    document.getElementById('editCopyArea').focus();
+    setFlowStep(3);
+
+    document.getElementById('saveCopyEdit')?.addEventListener('click', () => {
+      currentCopy = document.getElementById('editCopyArea').value;
+      document.querySelector('.copy-output').innerHTML = currentCopy.replace(/\n/g, '<br>');
+      const newCount = currentCopy.replace(/\s/g, '').length;
+      editArea.innerHTML = '<div class="flow-step-header"><span class="flow-step-badge check">✅ 已儲存</span><span class="flow-step-status">字數 ' + newCount + '</span></div>';
+      setFlowStep(4);
+    });
+  });
   resultsEl.classList.remove('hidden');
   btn.disabled = false;
   btn.innerHTML = '<span class="btn-icon">✨</span><span>生成文案</span>';
