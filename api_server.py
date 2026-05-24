@@ -279,8 +279,11 @@ def search_threads_api():
         return jsonify({'error': '請輸入搜索關鍵字'}), 400
 
     try:
-        sys.path.insert(0, os.path.join(PROJECT_ROOT, 'scripts'))
-        from threads_crawler import search_threads
+        try:
+            sys.path.insert(0, os.path.join(PROJECT_ROOT, 'scripts'))
+            from threads_crawler import search_threads
+        except ImportError:
+            return jsonify({'error': '搜索功能需要本機環境（Playwright）'}), 503
         results = search_threads(keyword, max_results=10)
 
         # 加爆文標記
@@ -315,4 +318,5 @@ if __name__ == '__main__':
     print(f"📁 Project root: {PROJECT_ROOT}")
     print(f"🌐 http://localhost:5000")
     port = int(os.environ.get('PORT', 8080))
+    print(f"🚀 Starting on port {port}, API key: {'set' if ANTHROPIC_API_KEY else 'NOT SET'}", flush=True)
     app.run(host='0.0.0.0', port=port, debug=False)
