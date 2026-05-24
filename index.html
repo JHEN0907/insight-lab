@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insight Lab — 內容創作工作台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236b7b5a'/><text x='50' y='68' font-size='48' font-weight='bold' fill='white' text-anchor='middle' font-family='serif'>IL</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <div class="brand-icon">IL</div>
+      <div class="brand-text">
+        <span class="brand-name">Insight Lab</span>
+        <span class="brand-handle">@jhen_insightlab</span>
+      </div>
+    </div>
+    <div class="topnav-right">
+      <span class="api-status" id="apiStatus" title="API 連線狀態">
+        <span class="api-dot"></span>
+        <span class="api-label">離線</span>
+      </span>
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+    <!-- Sidebar (Desktop) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">創作</div>
+        <a href="#viral-analyzer" class="sidebar-item active" data-page="viral-analyzer">
+          <span class="sidebar-icon">🔍</span>
+          <span>爆文靈感助手</span>
+        </a>
+        <a href="#matrix" class="sidebar-item" data-page="matrix">
+          <span class="sidebar-icon">📐</span>
+          <span>內容矩陣</span>
+        </a>
+        <a href="#copywriter" class="sidebar-item" data-page="copywriter">
+          <span class="sidebar-icon">📝</span>
+          <span>文案寫作助手</span>
+        </a>
+        <a href="#carousel" class="sidebar-item" data-page="carousel">
+          <span class="sidebar-icon">📱</span>
+          <span>輪播設計</span>
+        </a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">靈感</div>
+        <a href="#inspiration" class="sidebar-item" data-page="inspiration">
+          <span class="sidebar-icon">💡</span>
+          <span>靈感收集</span>
+        </a>
+        <a href="#trending" class="sidebar-item" data-page="trending">
+          <span class="sidebar-icon">🔥</span>
+          <span>爆款牆</span>
+        </a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">研究</div>
+        <a href="#search" class="sidebar-item" data-page="search">
+          <span class="sidebar-icon">🔎</span>
+          <span>河道搜索</span>
+        </a>
+        <a href="#diagnosis" class="sidebar-item" data-page="diagnosis">
+          <span class="sidebar-icon">📊</span>
+          <span>流量診斷</span>
+        </a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">管理</div>
+        <a href="#schedule" class="sidebar-item" data-page="schedule">
+          <span class="sidebar-icon">📅</span>
+          <span>排程管理</span>
+        </a>
+        <a href="#skool" class="sidebar-item" data-page="skool">
+          <span class="sidebar-icon">📚</span>
+          <span>Skool 工作台</span>
+        </a>
+        <a href="#settings" class="sidebar-item" data-page="settings">
+          <span class="sidebar-icon">⚙️</span>
+          <span>設定</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Page: Viral Analyzer (Default) -->
+      <div class="page active" id="page-viral-analyzer">
+        <div class="page-hero">
+          <p class="page-subtitle">CONTENT ANALYSIS TOOL</p>
+          <h1 class="page-title">Threads <span class="text-accent">爆文靈感助手</span></h1>
+          <p class="page-desc">貼上熱門貼文，AI 幫你拆解爆文密碼、挖掘受眾痛點、<br>產出一份你的領域可直接套用的格式靈感。</p>
+        </div>
+
+        <!-- Input Area (unified: text + image attach) -->
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">📋</span>
+            <span>貼上你收集至少 1 篇 THREADS 貼文</span>
+          </div>
+          <textarea class="tool-textarea" id="viralInput" placeholder="將多則 Threads 貼文複製貼上這裡⋯
+
+最佳格式（分析更精準）：
+• 帳號名稱（@xxx）
+• 互動數據（❤️ 按讚 💬 留言 🔄 轉發）
+• 貼文內文
+• 每則貼文間用空行分隔
+
+💡 也可以直接上傳截圖，AI 會自動辨識圖中文字"></textarea>
+          <!-- Attached image previews (inline, below textarea) -->
+          <div class="attach-previews hidden" id="attachPreviews"></div>
+          <div class="tool-card-footer">
+            <div class="footer-left">
+              <label for="imageFileInput" class="attach-btn" title="上傳截圖">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </label>
+              <label for="fileUploadInput" class="attach-btn" title="上傳檔案">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </label>
+              <input type="file" id="imageFileInput" accept="image/*" multiple hidden>
+              <input type="file" id="fileUploadInput" accept=".txt,.md,.csv,.pdf,image/*" multiple hidden>
+              <span class="footer-hint">⌘/Ctrl + Enter 快速送出</span>
+            </div>
+            <button class="btn btn-primary" id="analyzeBtn">
+              <span class="btn-icon">✨</span>
+              <span>開始拆解</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State (hidden by default) -->
+        <div class="loading-state hidden" id="loadingState">
+          <div class="loading-icon">
+            <svg width="48" height="48" viewBox="0 0 48 48" class="loading-spinner">
+              <circle cx="24" cy="24" r="20" stroke="#8a9b6a" stroke-width="3" fill="none" stroke-dasharray="100" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="loading-text" id="loadingText">正在解析貼文數據⋯</p>
+          <div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>
+          <p class="loading-hint">由 Claude 驅動深度分析，約需 20-40 秒</p>
+        </div>
+
+        <!-- Stats Bar (hidden by default) -->
+        <div class="stats-bar hidden" id="statsBar">
+          <div class="stat-item">
+            <span class="stat-number" id="statTotal">0</span>
+            <span class="stat-label">分析貼文總數</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="statPicked">0</span>
+            <span class="stat-label">精選爆文拆解</span>
+          </div>
+        </div>
+
+        <!-- Results Area (hidden by default) -->
+        <div class="results-area hidden" id="resultsArea">
+          <!-- Results will be injected here -->
+        </div>
+      </div>
+
+      <!-- Page: Copywriter -->
+      <div class="page" id="page-copywriter">
+        <!-- Back to matrix -->
+        <a href="#matrix" class="back-link" id="backToMatrix">← 返回內容矩陣</a>
+        <div class="page-hero">
+          <p class="page-subtitle">AI WRITING ASSISTANT</p>
+          <h1 class="page-title">Threads <span class="text-accent">文案寫作助手</span></h1>
+        </div>
+        <!-- Selected format badge (from matrix click) -->
+        <div class="selected-format hidden" id="selectedFormat">
+          <div class="selected-format-inner">
+            <span class="selected-format-pillar" id="selectedPillar"></span>
+            <span class="selected-format-name" id="selectedFormatName"></span>
+            <button class="selected-format-clear" id="clearFormat" title="清除">&times;</button>
+          </div>
+          <p class="selected-format-hint">從內容矩陣帶入的靈感</p>
+        </div>
+        <!-- AI 協作流程 -->
+        <div class="ai-flow">
+          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">選題</span></div>
+          <div class="ai-flow-arrow">&rarr;</div>
+          <div class="ai-flow-step ai"><span class="ai-flow-who">AI</span><span class="ai-flow-label">發想</span></div>
+          <div class="ai-flow-arrow">&rarr;</div>
+          <div class="ai-flow-step ai"><span class="ai-flow-who">AI</span><span class="ai-flow-label">起草</span></div>
+          <div class="ai-flow-arrow">&rarr;</div>
+          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">重寫</span></div>
+          <div class="ai-flow-arrow">&rarr;</div>
+          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">定魂</span></div>
+        </div>
+        <!-- No format selected → prompt to go to matrix -->
+        <div class="matrix-cta" id="matrixCta">
+          <span style="font-size:24px;">📐</span>
+          <p style="margin:8px 0 4px;font-weight:600;color:var(--text);">從內容矩陣挑選靈感</p>
+          <p>點選矩陣格子，自動帶入主題和形式</p>
+          <button class="btn btn-primary" style="margin-top:12px;" id="goToMatrix">前往矩陣</button>
+        </div>
+        <!-- Hidden inputs for format data -->
+        <input type="hidden" id="formatSelect" value="">
+        <div class="pill-group hidden" id="pillarPills">
+          <button class="pill active" data-value="八字">八字</button>
+          <button class="pill" data-value="塔羅占卜">塔羅占卜</button>
+          <button class="pill" data-value="覺察修行">覺察修行</button>
+        </div>
+        <!-- Input -->
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">✏️</span>
+            <span>輸入主題或補充說明</span>
+          </div>
+          <textarea class="tool-textarea" id="copywriterInput" style="min-height:120px;" placeholder="直接輸入主題，AI 自動挑選形式並套用寫作技巧
+
+例如：夫妻宮坐比劫的感情模式"></textarea>
+          <div class="tool-card-footer">
+            <span class="footer-hint">AI 自動套用寫作技巧 + 亮點前移</span>
+            <button class="btn btn-primary" id="generateCopyBtn">
+              <span class="btn-icon">✨</span>
+              <span>生成文案</span>
+            </button>
+          </div>
+        </div>
+        <div class="results-area hidden" id="copywriterResults"></div>
+      </div>
+
+      <!-- Page: Carousel -->
+      <div class="page" id="page-carousel">
+        <div class="page-hero">
+          <p class="page-subtitle">CAROUSEL DESIGNER</p>
+          <h1 class="page-title">脆文轉 <span class="text-accent">IG 輪播</span></h1>
+          <p class="page-desc">貼上 Threads 文案，三階段生成 IG 輪播圖。</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">📋</span>
+            <span>貼上 Threads 文案</span>
+          </div>
+          <textarea class="tool-textarea" id="carouselInput" placeholder="將 Threads 文案貼上這裡⋯
+系統會自動拆成 10 頁輪播"></textarea>
+          <div class="tool-card-footer">
+            <span class="footer-hint">Phase 1 封面 → Phase 2 純文字 → Phase 3 AI 插圖</span>
+            <button class="btn btn-primary" id="generateCarouselBtn">
+              <span class="btn-icon">📱</span>
+              <span>生成輪播</span>
+            </button>
+          </div>
+        </div>
+        <div class="phase-steps">
+          <div class="phase-step">
+            <span class="phase-num">1</span>
+            <span class="phase-label">封面確認</span>
+          </div>
+          <div class="phase-arrow">&rarr;</div>
+          <div class="phase-step">
+            <span class="phase-num">2</span>
+            <span class="phase-label">純文字渲染</span>
+          </div>
+          <div class="phase-arrow">&rarr;</div>
+          <div class="phase-step">
+            <span class="phase-num">3</span>
+            <span class="phase-label">AI 插圖（選填）</span>
+          </div>
+        </div>
+        <div class="info-box">
+          <p>目前輪播生成需透過 Discord Bot 操作，網頁版串接開發中。</p>
+          <p>Discord 指令：選單 → 📱 輪播生圖</p>
+        </div>
+      </div>
+
+      <!-- Page: Inspiration -->
+      <div class="page" id="page-inspiration">
+        <div class="page-hero">
+          <p class="page-subtitle">INSPIRATION</p>
+          <h1 class="page-title"><span class="text-accent">靈感收集</span></h1>
+          <p class="page-desc">隨手記下想法，之後轉成文案。</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">💡</span>
+            <span>快速記錄靈感</span>
+          </div>
+          <textarea class="tool-textarea" id="inspirationInput" style="min-height:100px;" placeholder="隨手打字、語音轉文字、看到什麼想到什麼⋯
+記下來，之後可以直接轉成文案"></textarea>
+          <div class="tool-card-footer">
+            <div class="footer-left">
+              <div class="pill-group" style="padding:0;gap:4px;">
+                <button class="pill pill-sm insp-tag active" data-tag="未分類">未分類</button>
+                <button class="pill pill-sm insp-tag" data-tag="八字">八字</button>
+                <button class="pill pill-sm insp-tag" data-tag="覺察">覺察</button>
+                <button class="pill pill-sm insp-tag" data-tag="人設">人設</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="saveInspirationBtn">
+              <span class="btn-icon">💾</span>
+              <span>儲存</span>
+            </button>
+          </div>
+        </div>
+        <!-- 靈感列表 -->
+        <div class="inspiration-list" id="inspirationList">
+          <div class="info-box">
+            <p>儲存的靈感會顯示在這裡</p>
+            <p>可以從靈感直接「→ 生成文案」</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page: Trending (爆款牆) -->
+      <div class="page" id="page-trending">
+        <div class="page-hero">
+          <p class="page-subtitle">TRENDING</p>
+          <h1 class="page-title"><span class="text-accent">爆款牆</span></h1>
+          <p class="page-desc">每日自動更新的熱門文案 + 你上傳的爆文分析。</p>
+        </div>
+        <!-- 篩選 -->
+        <div class="bucket-tabs">
+          <button class="bucket-tab active" data-filter="all">全部</button>
+          <button class="bucket-tab" data-filter="my">我的領域</button>
+          <button class="bucket-tab" data-filter="cross">跨領域</button>
+          <button class="bucket-tab" data-filter="uploaded">我上傳的</button>
+        </div>
+        <!-- 爆款列表 -->
+        <div class="trending-list" id="trendingList">
+          <div class="trending-card">
+            <div class="trending-header">
+              <span class="trending-level">🔥🔥🔥</span>
+              <span class="trending-likes">❤️ 37,000</span>
+            </div>
+            <p class="trending-text">被誇久了，真的會變好看、變順、變有底氣。心理學叫「皮格馬利翁效應」⋯</p>
+            <div class="trending-meta">
+              <span>心理學</span>
+              <span>極短金句型</span>
+            </div>
+            <div class="trending-actions">
+              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
+            </div>
+          </div>
+          <div class="trending-card">
+            <div class="trending-header">
+              <span class="trending-level">🔥🔥🔥</span>
+              <span class="trending-likes">❤️ 16,000</span>
+            </div>
+            <p class="trending-text">一句話形容「最高級、最健康的戀愛狀態」：我先來⋯</p>
+            <div class="trending-meta">
+              <span>感情</span>
+              <span>提問互動型</span>
+            </div>
+            <div class="trending-actions">
+              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
+            </div>
+          </div>
+          <div class="trending-card">
+            <div class="trending-header">
+              <span class="trending-level">🔥🔥</span>
+              <span class="trending-likes">❤️ 4,600</span>
+            </div>
+            <p class="trending-text">盤點那些活人感行為——前輩一位時做怪表情以示尊重⋯</p>
+            <div class="trending-meta">
+              <span>生活</span>
+              <span>盤點型</span>
+            </div>
+            <div class="trending-actions">
+              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page: Search -->
+      <div class="page" id="page-search">
+        <div class="page-hero">
+          <p class="page-subtitle">THREADS SEARCH</p>
+          <h1 class="page-title">Threads <span class="text-accent">河道搜索</span></h1>
+          <p class="page-desc">用關鍵字搜索 Threads 熱門貼文，自動分類三桶子。</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">🔎</span>
+            <span>輸入搜索關鍵字</span>
+          </div>
+          <div class="search-input-row">
+            <input type="text" class="form-input" id="searchKeyword" placeholder="例如：八字、塔羅占卜、覺察">
+            <button class="btn btn-primary" id="searchBtn">
+              <span>搜索</span>
+            </button>
+          </div>
+          <div class="pill-group" style="padding: 0 20px 16px;">
+            <button class="pill pill-sm search-quick" data-kw="八字">八字</button>
+            <button class="pill pill-sm search-quick" data-kw="塔羅占卜">塔羅占卜</button>
+            <button class="pill pill-sm search-quick" data-kw="覺察">覺察</button>
+            <button class="pill pill-sm search-quick" data-kw="改運">改運</button>
+            <button class="pill pill-sm search-quick" data-kw="十神">十神</button>
+            <button class="pill pill-sm search-quick" data-kw="命盤">命盤</button>
+          </div>
+        </div>
+        <div class="info-box">
+          <p>搜索使用 Playwright 登入 Threads，本機 API Server 運行時可直接搜索。</p>
+          <p>也可使用 Discord 「📬 爬文推薦」</p>
+        </div>
+        <div class="results-area hidden" id="searchResults"></div>
+      </div>
+
+      <!-- Page: Matrix -->
+      <div class="page" id="page-matrix">
+        <div class="page-hero">
+          <p class="page-subtitle">CONTENT MATRIX</p>
+          <h1 class="page-title"><span class="text-accent">內容矩陣</span></h1>
+          <p class="page-desc">形式 × 主題排列組合，<strong>點選格子</strong>直接進入文案生成。</p>
+        </div>
+        <!-- Bucket tabs -->
+        <div class="bucket-tabs">
+          <button class="bucket-tab active" data-bucket="sunflower">🌻 向日葵（流量）</button>
+          <button class="bucket-tab" data-bucket="succulent">🌵 多肉（信任）</button>
+          <button class="bucket-tab" data-bucket="pine">🌲 松樹（標竿）</button>
+        </div>
+        <!-- Matrix table -->
+        <div class="matrix-wrap">
+          <table class="matrix-table" id="matrixTable">
+            <thead>
+              <tr>
+                <th class="matrix-corner">形式 ＼ 主題</th>
+                <th>八字</th>
+                <th>塔羅占卜</th>
+                <th>覺察修行</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody">
+              <!-- JS 動態填入 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Page: Diagnosis -->
+      <div class="page" id="page-diagnosis">
+        <div class="page-hero">
+          <p class="page-subtitle">PERFORMANCE ANALYSIS</p>
+          <h1 class="page-title"><span class="text-accent">流量診斷</span></h1>
+          <p class="page-desc">輸入帖文數據，AI 分析為什麼表現好或差。</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">📊</span>
+            <span>貼上帖文 + 互動數據</span>
+          </div>
+          <textarea class="tool-textarea" id="diagnosisInput" placeholder="貼上你的帖文內容 + 互動數據（讚/留言/轉發）
+AI 會分析為什麼表現好或差，並給出改善建議。"></textarea>
+          <div class="tool-card-footer">
+            <span class="footer-hint">支援多篇同時分析</span>
+            <button class="btn btn-primary" id="diagnoseBtn">
+              <span class="btn-icon">📊</span>
+              <span>開始診斷</span>
+            </button>
+          </div>
+        </div>
+        <div class="results-area hidden" id="diagnosisResults"></div>
+      </div>
+
+      <!-- Page: Schedule -->
+      <div class="page" id="page-schedule">
+        <div class="page-hero">
+          <p class="page-subtitle">CONTENT CALENDAR</p>
+          <h1 class="page-title"><span class="text-accent">排程管理</span></h1>
+          <p class="page-desc">每週固定類型 + 安排已確認的文案。</p>
+        </div>
+        <!-- 週曆 -->
+        <div class="week-nav">
+          <button class="btn btn-outline" id="weekPrev">&larr; 上週</button>
+          <span class="week-label" id="weekLabel">本週</span>
+          <button class="btn btn-outline" id="weekNext">下週 &rarr;</button>
+        </div>
+        <div class="week-grid" id="weekGrid">
+          <!-- JS 動態填入 7 天卡片 -->
+        </div>
+      </div>
+
+      <!-- Page: Skool -->
+      <div class="page" id="page-skool">
+        <div class="page-hero">
+          <p class="page-subtitle">SKOOL WORKSPACE</p>
+          <h1 class="page-title">Skool <span class="text-accent">工作台</span></h1>
+          <p class="page-desc">八字深度文 → 付費版 / 免費版生成。</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-header">
+            <span class="tool-card-icon">📚</span>
+            <span>輸入八字深度主題</span>
+          </div>
+          <textarea class="tool-textarea" id="skoolInput" style="min-height:120px;" placeholder="例如：食神的人如何找到自己的天賦
+系統會生成付費版（深度解析）+ 免費版（節錄精華）"></textarea>
+          <div class="tool-card-footer">
+            <span class="footer-hint">自動生成付費版 + 免費版</span>
+            <button class="btn btn-primary" id="skoolBtn">
+              <span class="btn-icon">📚</span>
+              <span>生成 Skool 文章</span>
+            </button>
+          </div>
+        </div>
+        <div class="info-box">
+          <p>目前請使用 Discord 「📚 跑 Skool」</p>
+        </div>
+      </div>
+
+      <!-- Page: Settings -->
+      <div class="page" id="page-settings">
+        <div class="page-hero">
+          <p class="page-subtitle">SETTINGS</p>
+          <h1 class="page-title"><span class="text-accent">設定</span></h1>
+          <p class="page-desc">品牌語氣、參考帳號、Threads 登入狀態管理。</p>
+        </div>
+        <div class="settings-section">
+          <h3 class="settings-title">Threads 登入狀態</h3>
+          <div class="settings-row">
+            <span class="settings-label">Session 狀態</span>
+            <span class="settings-value status-unknown" id="threadsStatus">檢查中...</span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3 class="settings-title">品牌設定</h3>
+          <div class="settings-row">
+            <span class="settings-label">品牌名稱</span>
+            <span class="settings-value">Insight Lab / @jhen_insightlab</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">語氣風格</span>
+            <span class="settings-value">自然口語、像朋友聊天、不說教</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">目標受眾</span>
+            <span class="settings-value">18-38 歲女性，八字/改運/修行/感情</span>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3 class="settings-title">參考帳號</h3>
+          <div class="settings-row">
+            <span class="settings-label">八字命理</span>
+            <span class="settings-value">@bazitaro_cafe, @muray_heal</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">自媒體經營</span>
+            <span class="settings-value">@hello_ms_anna, @growthbysocial</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Bottom Tab Bar (Mobile) -->
+  <nav class="bottom-tabs">
+    <a href="#inspiration" class="tab-item" data-page="inspiration">
+      <span class="tab-icon">💡</span>
+      <span class="tab-label">靈感</span>
+    </a>
+    <a href="#trending" class="tab-item" data-page="trending">
+      <span class="tab-icon">🔥</span>
+      <span class="tab-label">爆款</span>
+    </a>
+    <a href="#matrix" class="tab-item" data-page="matrix">
+      <span class="tab-icon">📐</span>
+      <span class="tab-label">矩陣</span>
+    </a>
+    <a href="#schedule" class="tab-item" data-page="schedule">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">排程</span>
+    </a>
+    <a href="#" class="tab-item" id="moreTab">
+      <span class="tab-icon">☰</span>
+      <span class="tab-label">更多</span>
+    </a>
+  </nav>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <span>Insight Lab · @jhen_insightlab · Powered by Claude</span>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
