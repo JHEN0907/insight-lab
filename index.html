@@ -334,51 +334,8 @@
           <button class="bucket-tab" data-filter="cross">跨領域</button>
           <button class="bucket-tab" data-filter="uploaded">我上傳的</button>
         </div>
-        <!-- 爆款列表 -->
-        <div class="trending-list" id="trendingList">
-          <div class="trending-card">
-            <div class="trending-header">
-              <span class="trending-level">🔥🔥🔥</span>
-              <span class="trending-likes">❤️ 37,000</span>
-            </div>
-            <p class="trending-text">被誇久了，真的會變好看、變順、變有底氣。心理學叫「皮格馬利翁效應」⋯</p>
-            <div class="trending-meta">
-              <span>心理學</span>
-              <span>極短金句型</span>
-            </div>
-            <div class="trending-actions">
-              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
-            </div>
-          </div>
-          <div class="trending-card">
-            <div class="trending-header">
-              <span class="trending-level">🔥🔥🔥</span>
-              <span class="trending-likes">❤️ 16,000</span>
-            </div>
-            <p class="trending-text">一句話形容「最高級、最健康的戀愛狀態」：我先來⋯</p>
-            <div class="trending-meta">
-              <span>感情</span>
-              <span>提問互動型</span>
-            </div>
-            <div class="trending-actions">
-              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
-            </div>
-          </div>
-          <div class="trending-card">
-            <div class="trending-header">
-              <span class="trending-level">🔥🔥</span>
-              <span class="trending-likes">❤️ 4,600</span>
-            </div>
-            <p class="trending-text">盤點那些活人感行為——前輩一位時做怪表情以示尊重⋯</p>
-            <div class="trending-meta">
-              <span>生活</span>
-              <span>盤點型</span>
-            </div>
-            <div class="trending-actions">
-              <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
-            </div>
-          </div>
-        </div>
+        <!-- 爆款列表（JS 動態渲染） -->
+        <div class="trending-list" id="trendingList"></div>
       </div>
 
       <!-- Page: Search -->

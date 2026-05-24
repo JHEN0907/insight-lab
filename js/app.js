@@ -611,6 +611,60 @@ function renderWeek() {
   }
 }
 
+// ── Trending Wall ──
+
+const TRENDING_DATA = [
+  { likes: 37000, level: '🔥🔥🔥', text: '被誇久了，真的會變好看、變順、變有底氣。心理學叫「皮格馬利翁效應」⋯', domain: '心理學', form: '極短金句型', cat: 'cross' },
+  { likes: 16000, level: '🔥🔥🔥', text: '一句話形容「最高級、最健康的戀愛狀態」：我先來——「有你真好，但沒你也不是不行。」', domain: '感情', form: '提問互動型', cat: 'cross' },
+  { likes: 11800, level: '🔥🔥🔥', text: '台南竟然有這樣的夢幻列車', domain: '旅遊', form: '排名/頂級型', cat: 'cross' },
+  { likes: 4900, level: '🔥🔥', text: '滿月落在巨蟹座，請準備好釋放任何阻礙你實現 2025 願望的包袱', domain: '星座', form: '時事蹭流', cat: 'cross' },
+  { likes: 4600, level: '🔥🔥', text: '盤點那些活人感行為——前輩一位時做怪表情以示尊重⋯', domain: '生活', form: '盤點型', cat: 'cross' },
+  { likes: 4000, level: '🔥🔥', text: '有人知道哪裡改運很厲害不是騙錢的嗎？', domain: '命理', form: '提問互動型', cat: 'my' },
+  { likes: 3000, level: '🔥🔥', text: '每天正式開始工作前，用這 6 個步驟規劃一天', domain: '生產力', form: 'N步驟教學', cat: 'cross' },
+  { likes: 1600, level: '🔥🔥', text: '東區有一間老式算命館，命理界老油男⋯', domain: '命理', form: '故事翻轉型', cat: 'my' },
+  { likes: 486, level: '🔥', text: '食神的人最受不了參加不喜歡的應酬', domain: '八字', form: '十神×場景', cat: 'my' },
+  { likes: 270, level: '🔥', text: '八字中有偏印的你，來看看自己有沒有這幾點', domain: '八字', form: '正面對號入座', cat: 'my' },
+];
+
+function renderTrending(filter) {
+  const list = document.getElementById('trendingList');
+  const filtered = filter === 'all' ? TRENDING_DATA
+    : filter === 'uploaded' ? []
+    : TRENDING_DATA.filter(t => t.cat === filter);
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="info-box"><p>這個分類還沒有資料</p></div>';
+    return;
+  }
+  list.innerHTML = filtered.map(t => `
+    <div class="trending-card">
+      <div class="trending-header">
+        <span class="trending-level">${t.level}</span>
+        <span class="trending-likes">❤️ ${t.likes.toLocaleString()}</span>
+      </div>
+      <p class="trending-text">${t.text}</p>
+      <div class="trending-meta">
+        <span>${t.domain}</span>
+        <span>${t.form}</span>
+      </div>
+      <div class="trending-actions">
+        <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('[data-filter]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderTrending(tab.dataset.filter);
+  });
+});
+
+renderTrending('all');
+
+
 document.getElementById('weekPrev').addEventListener('click', () => { weekOffset--; renderWeek(); });
 
 
