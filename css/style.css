@@ -391,6 +391,7 @@ body {
 .matrix-table tbody td:not(:first-child) {
   color: var(--text-light); font-size: 12px;
   cursor: pointer; transition: background 0.15s;
+  white-space: nowrap;
 }
 .matrix-table tbody td:not(:first-child):hover {
   background: rgba(107, 123, 90, 0.08);
@@ -638,6 +639,7 @@ body {
   .search-input-row { flex-direction: column; }
   .matrix-table { font-size: 11px; }
   .matrix-table th, .matrix-table td { padding: 8px 10px; }
+  .matrix-table tbody td:not(:first-child) { white-space: normal; }
 }
 
 /* ── Attach Button & Inline Previews ── */
