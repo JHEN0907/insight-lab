@@ -374,8 +374,9 @@ body {
 }
 .matrix-corner {
   background: var(--bg-alt); font-weight: 600; color: var(--text-light);
-  font-size: 11px; width: 80px; max-width: 80px;
+  font-size: 11px; min-width: 100px;
   text-align: center; vertical-align: middle;
+  white-space: nowrap;
 }
 .matrix-table thead th {
   background: var(--primary); color: white;
@@ -385,8 +386,9 @@ body {
 .matrix-table thead th:first-child { background: var(--bg-alt); color: var(--text-light); }
 .matrix-table tbody td:first-child {
   font-weight: 600; background: var(--bg-alt);
-  font-size: 11px; width: 80px; max-width: 80px;
+  font-size: 12px; min-width: 100px;
   text-align: center; vertical-align: middle;
+  white-space: nowrap;
 }
 .matrix-table tbody td:not(:first-child) {
   color: var(--text-light); font-size: 12px;
