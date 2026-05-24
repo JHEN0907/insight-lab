@@ -642,6 +642,14 @@ body {
   .matrix-table { font-size: 11px; }
   .matrix-table th, .matrix-table td { padding: 8px 10px; }
   .matrix-table tbody td:not(:first-child) { white-space: normal; }
+  .matrix-table tbody td:first-child {
+    writing-mode: vertical-rl; min-width: auto; white-space: normal;
+    font-size: 11px; padding: 10px 6px; letter-spacing: 0.1em;
+  }
+  .matrix-corner {
+    writing-mode: vertical-rl; min-width: auto; white-space: normal;
+    font-size: 10px; padding: 8px 6px;
+  }
 }
 
 /* ── Attach Button & Inline Previews ── */
