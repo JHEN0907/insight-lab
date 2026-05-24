@@ -56,7 +56,7 @@ def index():
 
 @app.route('/api/health')
 def health():
-    return jsonify({'status': 'ok', 'claude': os.path.exists(CLAUDE_PATH)})
+    return jsonify({'status': 'ok', 'api_key': bool(ANTHROPIC_API_KEY)})
 
 
 # ─── 爆文靈感助手 API ───
