@@ -824,27 +824,62 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
     techniques = ['震撼亮點前移', '極致壓縮句型', '餘韻設計'];
   }
 
+  // AI 味檢測
+  const aiChecks = [
+    { label: '開頭現場感', pass: !/^(近年來|隨著|在當今)/.test(copy) },
+    { label: '無模板轉折詞', pass: !/(此外|另外值得|最後讓我們)/.test(copy) },
+    { label: '有具體細節', pass: /\d/.test(copy) || /我|朋友|那天|昨天/.test(copy) },
+    { label: '有明確立場', pass: !/這樣也對.*那樣也/.test(copy) },
+    { label: 'Emoji 適量', pass: (copy.match(/[\u{1F000}-\u{1FFFF}]/gu) || []).length <= 2 },
+  ];
+  const passCount = aiChecks.filter(c => c.pass).length;
+
+  // 字數分析
+  const charCount = copy.replace(/\s/g, '').length;
+  const charStatus = charCount <= 300 ? '✅ 適中' : charCount <= 500 ? '⚠️ 偏長' : '❌ 過長';
+
   resultsEl.innerHTML = `
-    <div class="result-card open">
-      <div class="result-card-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="result-card-num">1</span>
-        <span class="result-card-title">${pillar} · ${format}${topic ? ' · ' + topic : ''}</span>
-        <span class="result-card-toggle">▼</span>
+    <!-- Step 1: AI 起草 -->
+    <div class="flow-step-card">
+      <div class="flow-step-header">
+        <span class="flow-step-badge ai">AI 起草</span>
+        <span class="flow-step-status">✅ 完成</span>
       </div>
-      <div class="result-card-body">
-        <div class="result-section">
-          <div class="result-section-title">生成文案</div>
-          <div class="result-content copy-output">${copy.replace(/\n/g, '<br>')}</div>
-        </div>
-        <div class="result-section">
-          <div class="result-section-title">套用技巧</div>
-          <div class="result-content">
-            <ul>${techniques.map(t => `<li>${t}</li>`).join('')}</ul>
-          </div>
-        </div>
-        <div class="copy-actions">
-          <button class="btn btn-primary btn-copy" onclick="navigator.clipboard.writeText(this.closest('.result-card').querySelector('.copy-output').innerText);this.innerHTML='✅ 已複製';setTimeout(()=>this.innerHTML='📋 複製文案',1500)">📋 複製文案</button>
-        </div>
+      <div class="result-content copy-output">${copy.replace(/\n/g, '<br>')}</div>
+      <div class="flow-step-meta">字數 ${charCount} ${charStatus} · ${pillar}${format ? ' · ' + format : ''}</div>
+    </div>
+
+    <!-- Step 2: 寫作技巧分析 -->
+    <div class="flow-step-card">
+      <div class="flow-step-header">
+        <span class="flow-step-badge check">技巧檢測</span>
+      </div>
+      <div class="flow-step-checks">
+        <div class="flow-check-title">套用的寫作技巧</div>
+        <ul>${techniques.map(t => `<li>✅ ${t}</li>`).join('')}</ul>
+        <div class="flow-check-title" style="margin-top:12px;">AI 味檢測（${passCount}/${aiChecks.length}）</div>
+        <ul>${aiChecks.map(c => `<li>${c.pass ? '✅' : '⚠️'} ${c.label}</li>`).join('')}</ul>
+      </div>
+    </div>
+
+    <!-- Step 3: 你的行動 -->
+    <div class="flow-step-card">
+      <div class="flow-step-header">
+        <span class="flow-step-badge you">你來定魂</span>
+      </div>
+      <div class="flow-step-suggestions">
+        <p><strong>建議你修改的地方：</strong></p>
+        <ul>
+          <li>🖊️ <strong>重寫開頭</strong> — 用你的真實場景替換 AI 的開頭，加入個人經驗</li>
+          <li>🖊️ <strong>重寫結尾</strong> — 最後一句從你的靈魂長出來，不是 AI 語料庫輸出</li>
+          <li>🔍 <strong>加入細節</strong> — 補上具體的人/地點/時間/數字，消滅 AI 感</li>
+          <li>📖 <strong>大聲讀一遍</strong> — 不像你說話就繼續改</li>
+        </ul>
+      </div>
+      <div class="copy-actions">
+        <button class="btn btn-primary btn-copy" onclick="navigator.clipboard.writeText(this.closest('.flow-step-card').parentElement.querySelector('.copy-output').innerText);this.innerHTML='✅ 已複製';setTimeout(()=>this.innerHTML='📋 複製文案',1500)">📋 複製文案</button>
+        <button class="btn btn-outline" onclick="switchPage('carousel')">📱 轉輪播</button>
+        <button class="btn btn-outline" onclick="switchPage('schedule')">📅 排入排程</button>
       </div>
     </div>
   `;

@@ -559,10 +559,38 @@ body {
   cursor: pointer;
 }
 
+/* ── Flow Step Cards (Copywriter) ── */
+.flow-step-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  margin-bottom: 12px; animation: slideUp 0.3s ease;
+}
+.flow-step-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.flow-step-badge {
+  font-size: 12px; font-weight: 600; padding: 4px 12px;
+  border-radius: 12px;
+}
+.flow-step-badge.ai { background: rgba(160,128,96,0.15); color: var(--accent); }
+.flow-step-badge.check { background: rgba(107,123,90,0.15); color: var(--primary); }
+.flow-step-badge.you { background: rgba(107,123,90,0.25); color: var(--primary-dark); }
+.flow-step-status { font-size: 12px; color: var(--text-muted); }
+.flow-step-meta { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+.flow-step-checks ul, .flow-step-suggestions ul {
+  list-style: none; padding: 0; margin: 6px 0;
+}
+.flow-step-checks li, .flow-step-suggestions li {
+  font-size: 13px; line-height: 1.8; color: var(--text);
+}
+.flow-check-title { font-size: 12px; font-weight: 600; color: var(--primary); }
+.flow-step-suggestions p { font-size: 13px; color: var(--text); margin-bottom: 6px; }
+
 /* ── Copy Output & Actions ── */
 .copy-output { white-space: pre-line; }
 .copy-actions {
-  margin-top: 12px; display: flex; gap: 8px;
+  margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;
 }
 .btn-copy { font-size: 13px; padding: 8px 16px; }
 
