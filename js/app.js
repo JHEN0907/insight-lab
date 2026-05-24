@@ -105,7 +105,7 @@ if (moreTab) {
 }
 
 // Handle URL hash on load
-const initialPage = window.location.hash.replace('#', '') || 'viral-analyzer';
+const initialPage = window.location.hash.replace('#', '') || 'inspiration';
 switchPage(initialPage);
 
 
