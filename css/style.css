@@ -711,11 +711,22 @@ body {
   .main-content { margin-left: 0; padding: 20px 16px 100px; }
   .app-footer { margin-left: 0; margin-bottom: var(--bottomtab-h); }
   .bottom-tabs { display: flex; }
-  .page-title { font-size: 24px; }
+  .page-title { font-size: 22px; }
+  .page-desc { font-size: 13px; line-height: 1.8; }
   .page-desc br { display: none; }
+  .page-hero { margin-bottom: 24px; }
+  .page-subtitle { font-size: 10px; letter-spacing: 2px; }
   .stats-bar { gap: 40px; padding: 16px; }
   .stat-number { font-size: 22px; }
-  .tool-textarea { min-height: 160px; }
+  .tool-textarea { min-height: 140px; font-size: 14px; line-height: 1.8; }
+  .tool-card-header { font-size: 13px; padding: 12px 16px; }
+  .tool-card-footer { padding: 10px 16px; }
+  .result-content { font-size: 13px; line-height: 1.9; }
+  .trending-text { font-size: 13px; line-height: 1.8; }
+  .ai-flow { gap: 3px; }
+  .ai-flow-step { padding: 5px 8px; min-width: 44px; }
+  .ai-flow-label { font-size: 10px; }
+  .api-status { display: none; }
 }
 
 @media (max-width: 480px) {
