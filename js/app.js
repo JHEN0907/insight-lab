@@ -614,16 +614,60 @@ function renderWeek() {
 // ── Trending Wall ──
 
 const TRENDING_DATA = [
-  { likes: 37000, level: '🔥🔥🔥', text: '被誇久了，真的會變好看、變順、變有底氣。心理學叫「皮格馬利翁效應」⋯', domain: '心理學', form: '極短金句型', cat: 'cross' },
-  { likes: 16000, level: '🔥🔥🔥', text: '一句話形容「最高級、最健康的戀愛狀態」：我先來——「有你真好，但沒你也不是不行。」', domain: '感情', form: '提問互動型', cat: 'cross' },
-  { likes: 11800, level: '🔥🔥🔥', text: '台南竟然有這樣的夢幻列車', domain: '旅遊', form: '排名/頂級型', cat: 'cross' },
-  { likes: 4900, level: '🔥🔥', text: '滿月落在巨蟹座，請準備好釋放任何阻礙你實現 2025 願望的包袱', domain: '星座', form: '時事蹭流', cat: 'cross' },
-  { likes: 4600, level: '🔥🔥', text: '盤點那些活人感行為——前輩一位時做怪表情以示尊重⋯', domain: '生活', form: '盤點型', cat: 'cross' },
-  { likes: 4000, level: '🔥🔥', text: '有人知道哪裡改運很厲害不是騙錢的嗎？', domain: '命理', form: '提問互動型', cat: 'my' },
-  { likes: 3000, level: '🔥🔥', text: '每天正式開始工作前，用這 6 個步驟規劃一天', domain: '生產力', form: 'N步驟教學', cat: 'cross' },
-  { likes: 1600, level: '🔥🔥', text: '東區有一間老式算命館，命理界老油男⋯', domain: '命理', form: '故事翻轉型', cat: 'my' },
-  { likes: 486, level: '🔥', text: '食神的人最受不了參加不喜歡的應酬', domain: '八字', form: '十神×場景', cat: 'my' },
-  { likes: 270, level: '🔥', text: '八字中有偏印的你，來看看自己有沒有這幾點', domain: '八字', form: '正面對號入座', cat: 'my' },
+  { likes: 37000, comments: 2, reposts: 0, level: '🔥🔥🔥',
+    text: '你知道嗎？一個人被誇久了，真的會變好看、變順、變有底氣。心理學叫「皮格馬利翁效應」：你怎麼期待一個人，他就會慢慢長成那個樣子。',
+    domain: '心理學', form: '極短金句型', cat: 'cross',
+    hook: '重點提前 — 用心理學術語製造好奇，一句話就讓人想分享',
+    why: '極短（3行以內）+ 反直覺認知 + 正面能量 = 分享慾爆棚',
+    apply: '「你知道嗎？命盤裡的食神，被鼓勵久了真的會發光。心理學叫⋯」' },
+  { likes: 16000, comments: 2, reposts: 0, level: '🔥🔥🔥',
+    text: '一句話形容「最高級、最健康的戀愛狀態」：我先來——「有你真好，但沒你也不是不行。」換你們',
+    domain: '感情', form: '提問互動型', cat: 'cross',
+    hook: '問句破題 — 先示範答案降低留言門檻，「換你們」引爆互動',
+    why: '提問+先給答案+簡單回覆門檻 = 留言率爆炸',
+    apply: '「一句話形容你的八字命盤：我先來——『看懂了不代表接受了』」' },
+  { likes: 4900, comments: 36, reposts: 134, level: '🔥🔥',
+    text: '滿月落在巨蟹座的日子，請準備好利用這股強大的能量，釋放任何阻礙你實現 2025 願望的包袱。',
+    domain: '星座', form: '時事蹭流', cat: 'cross',
+    hook: '時事蹭流 — 蹭「滿月×星座」天文熱點，結合能量概念',
+    why: '時效性話題 + 行動呼籲（準備好釋放）+ 正面期許',
+    apply: '「[節氣/滿月] 的能量最適合重新審視你的命盤——今天很適合問自己一個問題」' },
+  { likes: 4600, comments: 29, reposts: 460, level: '🔥🔥',
+    text: '盤點那些活人感行為——前輩一位時做怪表情以示尊重、前輩飆高音時做怪表情以示尊重、把ADHD當玩笑展現幽默感⋯',
+    domain: '生活', form: '盤點型', cat: 'cross',
+    hook: '盤點型 — 「盤點那些___」清單格式引發共鳴，轉發率高（460轉發）',
+    why: '清單型好收藏 + 生活共鳴 + 幽默感 = 高轉發',
+    apply: '「盤點那些八字裡帶傷官的人會做的事——開會時內心已經翻了 87 次白眼⋯」' },
+  { likes: 4000, comments: 53, reposts: 122, level: '🔥🔥',
+    text: '有人知道哪裡改運很厲害不是騙錢的嗎？希望是推薦的廟可以去走走。近一兩週連續發生不好的事情⋯',
+    domain: '命理', form: '提問互動型', cat: 'my',
+    hook: '真實提問 — 用真實困擾引發共鳴，不是創作者身份而是「普通人」視角',
+    why: '真實痛點 + 求助感 + 留言推薦 = 高回覆（53留言）',
+    apply: '「最近有人問我：八字真的能看出什麼時候轉運嗎？老實說⋯」' },
+  { likes: 3000, comments: 31, reposts: 316, level: '🔥🔥',
+    text: '每天正式開始工作前，我推薦可以用這 6 個步驟規劃一天的工作：1. 拿出一張白紙 2. 畫一個倒T⋯',
+    domain: '生產力', form: 'N步驟教學', cat: 'cross',
+    hook: '數字成效 — 「6 個步驟」承諾具體知識量，讓人想收藏',
+    why: '清楚的步驟 + 簡單可執行 + 收藏價值 = 高轉發（316轉發）',
+    apply: '「3 步驟看懂你的命盤感情區：1. 找到日柱 2. 看夫妻宮⋯」' },
+  { likes: 1600, comments: 122, reposts: 53, level: '🔥🔥',
+    text: '東區有一間老式算命館，命理界老油男。算命收費一次六千，算的超江湖術士，一點內容都沒有，扯不過就找神明⋯',
+    domain: '命理', form: '故事翻轉型', cat: 'my',
+    hook: '現場故事 — 真實經歷爆料，有現場感和爭議性',
+    why: '真實故事 + 爆料感 + 爭議性 = 超高留言（122留言）',
+    apply: '「上週有人拿著別家的命盤分析來找我，我看完之後整個人沉默了⋯」' },
+  { likes: 486, comments: 0, reposts: 0, level: '🔥',
+    text: '食神的人最受不了參加不喜歡的應酬',
+    domain: '八字', form: '十神×場景', cat: 'my',
+    hook: '點名受眾 — 用十神點名特定人群，讓人對號入座',
+    why: '精準打中特定族群 + 「被說中」的快感 = 自然分享',
+    apply: '「偏印的人最受不了被問『你到底在想什麼？』」' },
+  { likes: 270, comments: 19, reposts: 16, level: '🔥',
+    text: '八字中有偏印的你，來看看自己有沒有以下這幾點：1.獨處時通常最有能量 2.對人事敏感度比一般人高⋯',
+    domain: '八字', form: '正面對號入座', cat: 'my',
+    hook: '點名受眾+清單 — 正面標籤讓人想對照，清單格式好收藏',
+    why: '正面標籤 + 自我驗證慾望 + 「中了幾個」互動感',
+    apply: '「夫妻宮坐比劫的你，來看看有沒有這幾點⋯」' },
 ];
 
 function renderTrending(filter) {
@@ -641,14 +685,29 @@ function renderTrending(filter) {
       <div class="trending-header">
         <span class="trending-level">${t.level}</span>
         <span class="trending-likes">❤️ ${t.likes.toLocaleString()}</span>
+        <span class="trending-engagement">💬 ${t.comments || 0} 🔄 ${t.reposts || 0}</span>
       </div>
       <p class="trending-text">${t.text}</p>
       <div class="trending-meta">
         <span>${t.domain}</span>
         <span>${t.form}</span>
       </div>
+      <div class="trending-analysis">
+        <div class="trending-analysis-row">
+          <span class="trending-analysis-label">Hook 分析</span>
+          <span>${t.hook}</span>
+        </div>
+        <div class="trending-analysis-row">
+          <span class="trending-analysis-label">為什麼爆</span>
+          <span>${t.why}</span>
+        </div>
+        <div class="trending-analysis-row">
+          <span class="trending-analysis-label">套到八字</span>
+          <span>${t.apply}</span>
+        </div>
+      </div>
       <div class="trending-actions">
-        <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter')">→ 套用這個形式</button>
+        <button class="btn btn-outline btn-sm" onclick="switchPage('copywriter');document.getElementById('copywriterInput').value='${t.apply.replace(/'/g, "\\'")}'"">→ 套用這個形式</button>
       </div>
     </div>
   `).join('');
