@@ -3,9 +3,9 @@
  * 前端邏輯：頁面導航 + 各功能頁面
  */
 
-const API_BASE = window.location.origin.includes('localhost') || window.location.protocol === 'file:'
+const API_BASE = window.location.protocol === 'file:'
   ? 'http://localhost:5050'
-  : `http://${window.location.hostname}:5050`;
+  : window.location.origin;
 
 async function apiCall(endpoint, body) {
   try {

@@ -1,7 +1,9 @@
 {
   "$schema": "https://schema.zeabur.app/template.json",
   "build": {
-    "type": "static",
-    "output": "."
+    "type": "python"
+  },
+  "start": {
+    "command": "python api_server.py"
   }
 }
