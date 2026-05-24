@@ -360,13 +360,14 @@ body {
 
 /* ── Matrix Table ── */
 .matrix-wrap {
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--card);
+  overflow: hidden;
 }
 .matrix-table {
   width: 100%; border-collapse: collapse;
   font-size: 13px; line-height: 1.6;
+  table-layout: fixed;
 }
 .matrix-table th, .matrix-table td {
   padding: 12px 14px; border: 1px solid var(--border);
@@ -393,7 +394,7 @@ body {
 .matrix-table tbody td:not(:first-child) {
   color: var(--text-light); font-size: 12px;
   cursor: pointer; transition: background 0.15s;
-  white-space: nowrap;
+  white-space: normal; word-break: break-word;
 }
 .matrix-table tbody td:not(:first-child):hover {
   background: rgba(107, 123, 90, 0.08);
