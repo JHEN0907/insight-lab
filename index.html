@@ -192,17 +192,15 @@
           </div>
           <p class="selected-format-hint">從內容矩陣帶入的靈感</p>
         </div>
-        <!-- AI 協作流程 -->
-        <div class="ai-flow">
-          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">選題</span></div>
+        <!-- AI 協作流程（四步驟亮燈） -->
+        <div class="ai-flow" id="aiFlowSteps">
+          <div class="ai-flow-step active" data-step="1"><span class="ai-flow-who">你</span><span class="ai-flow-label">選題</span></div>
           <div class="ai-flow-arrow">&rarr;</div>
-          <div class="ai-flow-step ai"><span class="ai-flow-who">AI</span><span class="ai-flow-label">發想</span></div>
+          <div class="ai-flow-step" data-step="2"><span class="ai-flow-who">AI</span><span class="ai-flow-label">寫初稿</span></div>
           <div class="ai-flow-arrow">&rarr;</div>
-          <div class="ai-flow-step ai"><span class="ai-flow-who">AI</span><span class="ai-flow-label">起草</span></div>
+          <div class="ai-flow-step" data-step="3"><span class="ai-flow-who">你</span><span class="ai-flow-label">重寫</span></div>
           <div class="ai-flow-arrow">&rarr;</div>
-          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">重寫</span></div>
-          <div class="ai-flow-arrow">&rarr;</div>
-          <div class="ai-flow-step done"><span class="ai-flow-who">你</span><span class="ai-flow-label">定魂</span></div>
+          <div class="ai-flow-step" data-step="4"><span class="ai-flow-who">AI</span><span class="ai-flow-label">查核</span></div>
         </div>
         <!-- No format selected → prompt to go to matrix -->
         <div class="matrix-cta" id="matrixCta">

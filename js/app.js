@@ -795,17 +795,33 @@ const MOCK_COPIES = {
   },
 };
 
+// Flow step helper
+function setFlowStep(step) {
+  document.querySelectorAll('#aiFlowSteps .ai-flow-step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'completed');
+    if (s < step) el.classList.add('completed');
+    else if (s === step) el.classList.add('active');
+  });
+}
+
+let currentCopy = '';
+
 document.getElementById('generateCopyBtn').addEventListener('click', async () => {
   const pillar = document.querySelector('#pillarPills .pill.active')?.dataset.value || '八字';
   const format = document.getElementById('formatSelect').value;
   const topic = document.getElementById('copywriterInput').value.trim();
   const resultsEl = document.getElementById('copywriterResults');
 
+  if (!topic) { document.getElementById('copywriterInput').focus(); return; }
+
   const btn = document.getElementById('generateCopyBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-icon">⏳</span><span>生成中...</span>';
+  btn.innerHTML = '<span class="btn-icon">⏳</span><span>AI 寫初稿中...</span>';
+  setFlowStep(2);
+  resultsEl.innerHTML = '';
+  resultsEl.classList.remove('hidden');
 
-  // Try real API
   let copy = '', techniques = [], hookType = '';
   let apiResult = null;
   try {
@@ -817,12 +833,14 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
     techniques = apiResult.techniques_used || [];
     hookType = apiResult.hook_type || '';
   } else {
-    // Fallback mock
     await sleep(1500);
     const pillarCopies = MOCK_COPIES[pillar] || MOCK_COPIES['八字'];
     copy = pillarCopies[format] || pillarCopies['default'] || MOCK_COPIES['八字']['default'];
     techniques = ['震撼亮點前移', '極致壓縮句型', '餘韻設計'];
   }
+
+  currentCopy = copy;
+  setFlowStep(3);
 
   // AI 味檢測
   const aiChecks = [
@@ -839,11 +857,11 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
   const charStatus = charCount <= 300 ? '✅ 適中' : charCount <= 500 ? '⚠️ 偏長' : '❌ 過長';
 
   resultsEl.innerHTML = `
-    <!-- Step 1: AI 起草 -->
+    <!-- Step 2: AI 寫初稿 -->
     <div class="flow-step-card">
       <div class="flow-step-header">
-        <span class="flow-step-badge ai">AI 起草</span>
-        <span class="flow-step-status">✅ 完成</span>
+        <span class="flow-step-badge ai">AI 寫初稿</span>
+        <span class="flow-step-status">✅ Threads 文案</span>
       </div>
       <div class="result-content copy-output">${copy.replace(/\n/g, '<br>')}</div>
       <div class="flow-step-meta">字數 ${charCount} ${charStatus} · ${pillar}${format ? ' · ' + format : ''}</div>

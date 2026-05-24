@@ -500,8 +500,12 @@ body {
   border: 1.5px solid var(--border); background: var(--card);
   min-width: 56px;
 }
-.ai-flow-step.done { border-color: var(--primary); background: rgba(107,123,90,0.06); }
-.ai-flow-step.ai { border-color: var(--accent); background: rgba(160,128,96,0.06); }
+.ai-flow-step.active { border-color: var(--primary); background: var(--primary); }
+.ai-flow-step.active .ai-flow-who, .ai-flow-step.active .ai-flow-label { color: white; }
+.ai-flow-step.completed { border-color: var(--primary); background: rgba(107,123,90,0.12); }
+.ai-flow-step.completed .ai-flow-who { color: var(--primary); }
+.ai-flow-step.completed::after { content: '✓'; position: absolute; top: 2px; right: 4px; font-size: 9px; color: var(--primary); }
+.ai-flow-step { position: relative; }
 .ai-flow-who {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
 }
