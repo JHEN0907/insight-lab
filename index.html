@@ -203,11 +203,8 @@
           <div class="ai-flow-step" data-step="4"><span class="ai-flow-who">AI</span><span class="ai-flow-label">查核</span></div>
         </div>
         <!-- No format selected → prompt to go to matrix -->
-        <div class="matrix-cta" id="matrixCta">
-          <span style="font-size:24px;">📐</span>
-          <p style="margin:8px 0 4px;font-weight:600;color:var(--text);">從內容矩陣挑選靈感</p>
-          <p>點選矩陣格子，自動帶入主題和形式</p>
-          <button class="btn btn-primary" style="margin-top:12px;" id="goToMatrix">前往矩陣</button>
+        <div class="matrix-cta-mini" id="matrixCta">
+          <a href="#matrix" id="goToMatrix">📐 從內容矩陣挑選靈感 →</a>
         </div>
         <!-- Hidden inputs for format data -->
         <input type="hidden" id="formatSelect" value="">
@@ -216,17 +213,33 @@
           <button class="pill" data-value="塔羅占卜">塔羅占卜</button>
           <button class="pill" data-value="覺察修行">覺察修行</button>
         </div>
-        <!-- Input -->
+        <!-- Input Mode Tabs -->
         <div class="tool-card">
-          <div class="tool-card-header">
+          <div class="copy-mode-tabs">
+            <button class="copy-mode-tab active" data-mode="generate">📝 AI 從零生成</button>
+            <button class="copy-mode-tab" data-mode="rewrite">💡 我有想法，幫我改寫</button>
+            <button class="copy-mode-tab" data-mode="refine">📝 文案幾乎完成，微調</button>
+          </div>
+          <div class="tool-card-header" id="copyModeHint">
             <span class="tool-card-icon">✏️</span>
             <span>輸入主題或補充說明</span>
           </div>
           <textarea class="tool-textarea" id="copywriterInput" style="min-height:120px;" placeholder="直接輸入主題，AI 自動挑選形式並套用寫作技巧
 
 例如：夫妻宮坐比劫的感情模式"></textarea>
+          <!-- 上傳附件區 -->
+          <div class="upload-bar">
+            <label class="upload-btn" title="上傳圖片/截圖">
+              📷 <input type="file" id="copyUploadImages" multiple accept="image/*" hidden>
+            </label>
+            <label class="upload-btn" title="上傳文件（txt/md/pdf）">
+              📄 <input type="file" id="copyUploadFiles" multiple accept=".txt,.md,.pdf,.doc,.docx" hidden>
+            </label>
+            <span class="upload-hint" id="uploadStatus">可上傳圖片或文件讓 AI 參考</span>
+          </div>
+          <div class="upload-preview" id="uploadPreview"></div>
           <div class="tool-card-footer">
-            <span class="footer-hint">AI 自動套用寫作技巧 + 亮點前移</span>
+            <span class="footer-hint">AI 自動搜尋熱門文章 + 套用寫作技巧</span>
             <button class="btn btn-primary" id="generateCopyBtn">
               <span class="btn-icon">✨</span>
               <span>生成文案</span>
@@ -274,10 +287,7 @@
             <span class="phase-label">AI 插圖（選填）</span>
           </div>
         </div>
-        <div class="info-box">
-          <p>目前輪播生成需透過 Discord Bot 操作，網頁版串接開發中。</p>
-          <p>Discord 指令：選單 → 📱 輪播生圖</p>
-        </div>
+        <div class="results-area hidden" id="carouselResults"></div>
       </div>
 
       <!-- Page: Inspiration -->
@@ -296,11 +306,13 @@
 記下來，之後可以直接轉成文案"></textarea>
           <div class="tool-card-footer">
             <div class="footer-left">
-              <div class="pill-group" style="padding:0;gap:4px;">
-                <button class="pill pill-sm insp-tag active" data-tag="未分類">未分類</button>
-                <button class="pill pill-sm insp-tag" data-tag="八字">八字</button>
-                <button class="pill pill-sm insp-tag" data-tag="覺察">覺察</button>
-                <button class="pill pill-sm insp-tag" data-tag="人設">人設</button>
+              <div class="insp-pill-group" id="inspTagGroup">
+                <button class="insp-pill active" data-tag="八字觀察">八字觀察</button>
+                <button class="insp-pill" data-tag="八字教學">八字教學</button>
+                <button class="insp-pill" data-tag="塔羅">塔羅</button>
+                <button class="insp-pill" data-tag="覺察">覺察</button>
+                <button class="insp-pill" data-tag="人設">人設</button>
+                <button class="insp-pill" data-tag="看劇說八字">看劇說八字</button>
               </div>
             </div>
             <button class="btn btn-primary" id="saveInspirationBtn">
@@ -323,16 +335,24 @@
         <div class="page-hero">
           <p class="page-subtitle">TRENDING</p>
           <h1 class="page-title"><span class="text-accent">爆款牆</span></h1>
-          <p class="page-desc">每日自動更新的熱門文案 + 你上傳的爆文分析。</p>
+          <p class="page-desc">搜尋 Threads / 小紅書 / IG 的熱門文案，分析爆文公式。</p>
         </div>
-        <!-- 篩選 -->
-        <div class="bucket-tabs">
-          <button class="bucket-tab active" data-filter="all">全部</button>
-          <button class="bucket-tab" data-filter="my">我的領域</button>
-          <button class="bucket-tab" data-filter="cross">跨領域</button>
-          <button class="bucket-tab" data-filter="uploaded">我上傳的</button>
+        <!-- 領域分類 -->
+        <div class="trending-tabs">
+          <button class="trending-tab active" data-tfilter="all">全部</button>
+          <button class="trending-tab" data-tfilter="bazi">八字命理</button>
+          <button class="trending-tab" data-tfilter="persona">人設心理</button>
+          <button class="trending-tab" data-tfilter="cross">跨領域</button>
+          <button class="btn btn-primary" id="refreshTrendingBtn" style="margin-left:auto;">🔄 重新載入</button>
         </div>
-        <!-- 爆款列表（JS 動態渲染） -->
+        <!-- 平台子篩選 -->
+        <div class="trending-platform-tabs">
+          <button class="platform-tab active" data-platform="all">全部平台</button>
+          <button class="platform-tab" data-platform="threads">Threads</button>
+          <button class="platform-tab" data-platform="xiaohongshu">小紅書</button>
+          <button class="platform-tab" data-platform="ig">IG</button>
+        </div>
+        <!-- 爆款列表 -->
         <div class="trending-list" id="trendingList"></div>
       </div>
 
@@ -377,28 +397,45 @@
           <h1 class="page-title"><span class="text-accent">內容矩陣</span></h1>
           <p class="page-desc">形式 × 主題排列組合，<strong>點選格子</strong>直接進入文案生成。</p>
         </div>
-        <!-- Bucket tabs -->
+        <!-- 大分類 Tab -->
+        <div class="matrix-pillar-tabs">
+          <button class="matrix-pillar-tab active" data-pillar="bazi">八字</button>
+          <button class="matrix-pillar-tab" data-pillar="tarot">塔羅</button>
+          <button class="matrix-pillar-tab" data-pillar="awareness">覺察修行</button>
+          <button class="matrix-pillar-tab" data-pillar="persona">人設文</button>
+        </div>
+        <!-- 桶子 Tab + 按鈕 -->
         <div class="bucket-tabs">
-          <button class="bucket-tab active" data-bucket="sunflower">🌻 向日葵（流量）</button>
-          <button class="bucket-tab" data-bucket="succulent">🌵 多肉（信任）</button>
-          <button class="bucket-tab" data-bucket="pine">🌲 松樹（標竿）</button>
+          <button class="bucket-tab active" data-bucket="sunflower">🌻 流量</button>
+          <button class="bucket-tab" data-bucket="succulent">🌵 信任</button>
+          <button class="bucket-tab" data-bucket="pine">🌲 標竿</button>
+          <button class="btn btn-outline btn-sm" id="aiMatrixBtn" style="margin-left:auto;">🤖 AI 發想</button>
+          <button class="btn btn-outline btn-sm" id="updateMatrixBtn">🔄 更新矩陣</button>
         </div>
         <!-- Matrix table -->
         <div class="matrix-wrap">
           <table class="matrix-table" id="matrixTable">
             <thead>
-              <tr>
-                <th class="matrix-corner">形式 ＼ 主題</th>
-                <th>八字</th>
-                <th>塔羅占卜</th>
-                <th>覺察修行</th>
+              <tr id="matrixHead">
+                <th class="matrix-corner">形式</th>
+                <!-- JS 動態填入子主題 -->
               </tr>
             </thead>
-            <tbody id="matrixBody">
-              <!-- JS 動態填入 -->
-            </tbody>
+            <tbody id="matrixBody"></tbody>
           </table>
         </div>
+        <div class="matrix-tip">💡 點選任一格子 → 自動帶入文案生成頁</div>
+        <!-- 看劇說八字專區（八字 tab 下才顯示） -->
+        <div class="drama-section" id="dramaBaziSection">
+          <div class="drama-header">
+            <h3>🎬 看劇說八字</h3>
+            <button class="btn btn-outline btn-sm" id="refreshDramaBtn">🔄 搜尋熱門劇</button>
+          </div>
+          <div class="drama-list" id="dramaList">
+            <div class="info-box"><p>點「🔄 搜尋熱門劇」找最新可以用八字分析的劇</p></div>
+          </div>
+        </div>
+        <div class="results-area hidden" id="matrixAiResults"></div>
       </div>
 
       <!-- Page: Diagnosis -->
@@ -438,10 +475,12 @@ AI 會分析為什麼表現好或差，並給出改善建議。"></textarea>
           <button class="btn btn-outline" id="weekPrev">&larr; 上週</button>
           <span class="week-label" id="weekLabel">本週</span>
           <button class="btn btn-outline" id="weekNext">下週 &rarr;</button>
+          <button class="btn btn-primary" id="aiWeekPlanBtn" style="margin-left:auto;">🤖 AI 週規劃</button>
         </div>
         <div class="week-grid" id="weekGrid">
           <!-- JS 動態填入 7 天卡片 -->
         </div>
+        <div class="results-area hidden" id="weekPlanResults"></div>
       </div>
 
       <!-- Page: Skool -->
@@ -510,6 +549,13 @@ AI 會分析為什麼表現好或差，並給出改善建議。"></textarea>
             <span class="settings-label">自媒體經營</span>
             <span class="settings-value">@hello_ms_anna, @growthbysocial</span>
           </div>
+        </div>
+        <div class="settings-section">
+          <h3 class="settings-title">AI 工具</h3>
+          <div class="copy-actions">
+            <button class="btn btn-outline" id="styleLearningBtn">📊 文風學習</button>
+          </div>
+          <div class="results-area hidden" id="styleLearningResults"></div>
         </div>
       </div>
 

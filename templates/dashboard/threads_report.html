@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Threads 發文策略分析報告</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; }
+body {
+  font-family: 'Noto Sans TC', 'Inter', sans-serif;
+  background: #0f0f10;
+  color: #e8e8e8;
+  padding: 56px 56px 80px;
+  min-height: 1920px;
+}
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; }
+.header h1 { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+.header .meta { font-size: 18px; color: #6b7280; text-align: right; }
+.header .handle { color: #a8d8a8; font-weight: 600; font-size: 16px; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 40px; }
+.kpi { background: #1a1a1c; border: 1px solid #2a2a2d; border-radius: 14px; padding: 22px 24px; }
+.kpi .label { font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600; }
+.kpi .value { font-size: 38px; font-weight: 800; color: #fff; line-height: 1; }
+.kpi .delta { font-size: 14px; color: #a8d8a8; margin-top: 8px; }
+.kpi .delta.warn { color: #f59e0b; }
+.kpi .sub { font-size: 13px; color: #6b7280; margin-top: 6px; }
+
+.section { background: #1a1a1c; border: 1px solid #2a2a2d; border-radius: 14px; padding: 28px 32px; margin-bottom: 22px; }
+.section h2 { font-size: 18px; font-weight: 700; color: #a8d8a8; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.section h2::before { content: '●'; color: #f5d76e; font-size: 12px; }
+
+table.top5 { width: 100%; border-collapse: collapse; font-size: 15px; }
+table.top5 th { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; text-align: left; padding: 10px 8px; border-bottom: 1px solid #2a2a2d; }
+table.top5 th.num { text-align: right; }
+table.top5 td { padding: 14px 8px; border-bottom: 1px solid #232326; vertical-align: top; }
+table.top5 td.rank { width: 28px; color: #6b7280; font-weight: 700; }
+table.top5 td.text { color: #e8e8e8; line-height: 1.5; max-width: 540px; }
+table.top5 td.text .preview { display: block; }
+table.top5 td.text .chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+table.top5 td.text .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #2a2a2d; color: #a8d8a8; font-weight: 600; }
+table.top5 td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+table.top5 td.er { color: #f5d76e; }
+
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.bar-list { display: flex; flex-direction: column; gap: 14px; }
+.bar-row { display: flex; align-items: center; gap: 14px; font-size: 15px; }
+.bar-row .label { width: 64px; color: #e8e8e8; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar-row .track { flex: 1; height: 12px; background: #232326; border-radius: 6px; overflow: hidden; }
+.bar-row .fill { height: 100%; background: linear-gradient(90deg, #f5d76e, #a8d8a8); border-radius: 6px; }
+.bar-row .pct { width: 56px; text-align: right; color: #f5d76e; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.breakdown-list { display: flex; flex-direction: column; gap: 12px; font-size: 15px; }
+.breakdown-list .row { display: flex; justify-content: space-between; padding: 6px 0; }
+.breakdown-list .row .name { color: #e8e8e8; }
+.breakdown-list .row .val { color: #a8d8a8; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.insight { font-size: 16px; line-height: 1.75; color: #d4d4d8; white-space: pre-line; }
+.insight strong { color: #f5d76e; }
+
+.footer { text-align: center; margin-top: 36px; font-size: 13px; color: #4b5563; }
+.footer .brand { color: #a8d8a8; font-weight: 700; letter-spacing: 0.2em; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Threads 發文策略分析報告</h1>
+    <div class="handle">@jhen_insightlab</div>
+  </div>
+  <div class="meta">
+    <div>{{ range_label }}</div>
+    <div>{{ generated_at }}</div>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="label">粉絲數</div>
+    <div class="value">{{ followers }}</div>
+    {% if followers_delta %}<div class="delta">{{ followers_delta }}</div>{% endif %}
+  </div>
+  <div class="kpi">
+    <div class="label">平均互動率</div>
+    <div class="value">{{ avg_er }}</div>
+    <div class="sub">{{ sample_count }} 篇樣本</div>
+  </div>
+  <div class="kpi">
+    <div class="label">最佳時段</div>
+    <div class="value">{{ best_hour }}</div>
+    <div class="sub">互動率 {{ best_hour_er }}</div>
+  </div>
+  <div class="kpi">
+    <div class="label">FRESHNESS</div>
+    <div class="value" style="font-size: 26px; color: {% if freshness_days > 3 %}#ef4444{% else %}#a8d8a8{% endif %};">{% if freshness_days > 3 %}已過期{% else %}活躍{% endif %}</div>
+    <div class="sub">{{ freshness_days }} 天未發文</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>歷史表現 Top 5</h2>
+  <table class="top5">
+    <thead>
+      <tr><th>#</th><th>內容</th><th class="num">觀看</th><th class="num">互動率</th><th class="num">時段</th></tr>
+    </thead>
+    <tbody>
+      {% for p in top_posts %}
+      <tr>
+        <td class="rank">{{ p.rank }}</td>
+        <td class="text">
+          <span class="preview">{{ p.text_preview }}</span>
+          <div class="chips">
+            <span class="chip">{{ p.hook_type }}</span>
+            <span class="chip">{{ p.length_band }}</span>
+            <span class="chip">{{ p.cta_type }}</span>
+            <span class="chip">{{ p.pillar }}</span>
+          </div>
+        </td>
+        <td class="num">{{ p.views_fmt }}</td>
+        <td class="num er">{{ p.er_fmt }}</td>
+        <td class="num">{{ p.hour_fmt }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="charts-row">
+  <div class="section">
+    <h2>高表現發文時段</h2>
+    <div class="bar-list">
+      {% for h in top_hours %}
+      <div class="bar-row">
+        <span class="label">{{ h.hour }}:00</span>
+        <div class="track"><div class="fill" style="width: {{ h.pct_width }}%;"></div></div>
+        <span class="pct">{{ h.pct }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>互動組成</h2>
+    <div class="breakdown-list">
+      <div class="row"><span class="name">按讚</span><span class="val">{{ breakdown.likes_pct }}</span></div>
+      <div class="row"><span class="name">轉發</span><span class="val">{{ breakdown.reposts_pct }}</span></div>
+      <div class="row"><span class="name">留言</span><span class="val">{{ breakdown.replies_pct }}</span></div>
+      <div class="row"><span class="name">引用</span><span class="val">{{ breakdown.quotes_pct }}</span></div>
+      <div class="row" style="margin-top:8px; padding-top:8px; border-top:1px solid #2a2a2d;"><span class="name">作者回覆</span><span class="val">{{ author_reply_rate }}</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>支柱表現分佈</h2>
+  <div class="bar-list">
+    {% for p in pillar_distribution %}
+    <div class="bar-row">
+      <span class="label" style="width:96px;">{{ p.name }}</span>
+      <div class="track"><div class="fill" style="width: {{ p.pct_width }}%;"></div></div>
+      <span class="pct">{{ p.count }} 篇</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if insight_text %}
+<div class="section">
+  <h2>策略洞察</h2>
+  <div class="insight">{{ insight_text }}</div>
+</div>
+{% endif %}
+
+<div class="footer">
+  <div class="brand">JHEN'S INSIGHT LAB</div>
+  <div>Threads Pipeline V3 Advisor — 自動產生</div>
+</div>
+
+</body>
+</html>

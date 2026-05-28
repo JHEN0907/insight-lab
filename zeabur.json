@@ -1,9 +1,6 @@
 {
   "$schema": "https://schema.zeabur.app/template.json",
   "build": {
-    "type": "python"
-  },
-  "start": {
-    "command": "python api_server.py"
+    "type": "dockerfile"
   }
 }

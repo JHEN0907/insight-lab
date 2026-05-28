@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Editorial Serif</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1350px; }
+body {
+  font-family: 'Noto Serif TC', serif;
+  background: var(--c1, #F5F0E6);
+  color: var(--c4, #1F2E27);
+  width: 1080px;
+  height: 1350px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* === 共用 === */
+.section-en {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent, #A8745F);
+  text-transform: uppercase;
+}
+.brand-mark {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  color: var(--c5, #6B7280);
+  text-align: center;
+}
+.series-label {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--accent, #A8745F);
+}
+.series-stamp-row {
+  display: flex; gap: 6px;
+  font-family: 'Noto Serif TC', serif;
+}
+.series-stamp-row span {
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--stamp-color, currentColor);
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  font-size: 30px; font-weight: 700; line-height: 1;
+  color: var(--stamp-color, currentColor);
+}
+.brand-mark-lg {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  text-align: center;
+}
+.handle {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+}
+.accent { color: var(--accent, #A8745F); }
+
+/* === COVER_ILLUST 封面 === */
+.cover-illust {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  padding: 90px 90px 70px;
+}
+.cover-illust .top {
+  flex: 0 0 auto;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.cover-illust .top .edition-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent, #A8745F);
+}
+.cover-illust .bottom {
+  justify-content: center !important;
+}
+.cover-illust .bottom .brand-mark {
+  flex: 0 1 auto;
+}
+.cover-illust .mid {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+}
+.cover-illust .main-title {
+  font-size: 96px; font-weight: 900; line-height: 1.15;
+  margin-bottom: 28px; letter-spacing: -0.01em;
+  white-space: pre-line;
+  color: var(--accent);
+}
+.cover-illust .sub-title {
+  font-size: 32px; font-weight: 500; color: var(--c5, #6B7280);
+  line-height: 1.55; max-width: 800px;
+  white-space: pre-line;
+}
+.cover-illust .illust-wrap {
+  margin: 40px 0 20px;
+  display: flex; justify-content: center;
+}
+.cover-illust .illust-wrap img {
+  width: 760px; height: 760px; object-fit: contain;
+}
+.cover-illust .bottom {
+  flex: 0 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* === BAZI_BOOK 八字筆記書頁風內頁 === */
+/* 繼承 page-base 所有排版，只改：左上 stamp-row → 右側書頁裝飾邊 */
+
+/* 右側書頁裝飾邊 */
+.bazi-book .deco-right {
+  display: flex; flex-direction: column;
+  align-items: center;
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 90px;
+  background: var(--c2, #F0EDE6);
+  padding-top: 80px;
+  gap: 6px;
+  z-index: 2;
+}
+/* 裝飾邊內部左側灰色陰影（書頁感）*/
+.bazi-book .deco-right::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0; width: 16px;
+  background: linear-gradient(to right, rgba(0,0,0,0.08), transparent);
+  pointer-events: none;
+}
+.bazi-book .deco-right span {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--c5);
+  border-radius: 50%;
+  width: 46px; height: 46px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--c5);
+}
+/* 裝飾邊下方：— 分隔線 + 標題標籤 */
+.bazi-book .deco-right .deco-sep {
+  width: 2px; height: 30px;
+  background: var(--c5, #8A8070);
+  margin: 6px 0;
+}
+.bazi-book .deco-right .deco-title {
+  writing-mode: vertical-rl;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700;
+  color: var(--c5);
+  letter-spacing: 0.12em;
+}
+.bazi-book .deco-right .deco-highlight {
+  writing-mode: vertical-rl;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--accent, #A8745F);
+  padding: 6px 8px;
+  background: transparent;
+  border: 2.5px solid var(--accent, #A8745F);
+  border-radius: 6px;
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+/* bazi-book：隱藏整個 top-row（concept_tag 和 stamp-row 都不在此顯示） */
+.bazi-book .top-row { display: none; }
+/* bazi-book 底色用 --c1 實心 + 右側留空給裝飾邊（90px 裝飾寬 + 90px 間距 = 左邊 90px 對稱）*/
+.bazi-book.page-base {
+  background: var(--c1, #F5F0E6);
+  padding-right: 180px;
+}
+/* bazi-book 插圖：預設位置（JS 會根據實際文字寬度動態調整居中）*/
+.bazi-book .corner-illust {
+  right: auto;
+  left: 620px;
+  width: 340px;
+  height: 340px;
+  transform: translateY(-50%);
+  z-index: 0;
+}
+.corner-illust img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+/* 大圖模式 */
+.bazi-book .corner-illust.illust-large {
+  width: 470px;
+  height: 470px;
+}
+/* 超大圖模式 */
+.bazi-book .corner-illust.illust-xl {
+  width: 620px;
+  height: 620px;
+  left: 400px;
+}
+/* 全幅圖模式 */
+.bazi-book .corner-illust.illust-full {
+  width: 800px;
+  height: 800px;
+  left: 200px;
+}
+
+/* === BAZI_COVER 八字觀察封面 === */
+.bazi-cover {
+  width: 100%; height: 100%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+.bazi-cover .cover-left {
+  width: 66.67%; height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.bazi-cover .cover-left img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  mix-blend-mode: normal;
+  filter: none;
+}
+.bazi-cover .cover-left::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, transparent 88%, var(--c1) 100%);
+  pointer-events: none;
+}
+.bazi-cover .cover-right {
+  width: 33.33%; height: 100%;
+  background: var(--c1);
+  background-image:
+    radial-gradient(ellipse at 80% 20%, rgba(120,80,40,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 80%, rgba(90,60,30,0.08) 0%, transparent 50%);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 80px 20px 60px;
+  position: relative;
+}
+/* 半透明變體：右側透出底圖 */
+.bazi-cover.translucent .cover-left {
+  width: 100%; height: 100%;
+  position: absolute; inset: 0;
+}
+.bazi-cover.translucent .cover-right {
+  width: 33.33%; height: 100%;
+  background: rgba(250, 250, 247, 0.82);
+  backdrop-filter: blur(2px);
+  margin-left: auto;
+}
+.bazi-cover.translucent .cover-left::after {
+  background: linear-gradient(to right, transparent 60%, rgba(250,250,247,0.5) 85%, rgba(250,250,247,0.85) 100%);
+}
+/* 圓圈印章 — 直式排列 */
+.bazi-cover .stamp-col {
+  display: flex; flex-direction: column;
+  gap: 5px; align-items: center;
+  position: absolute; top: 70px; right: 30px;
+}
+.bazi-cover .stamp-col span {
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--c5);
+  border-radius: 50%;
+  width: 50px; height: 50px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 22px; font-weight: 700;
+  line-height: 1;
+  color: var(--c5);
+}
+/* 大標題區 — 直式 */
+.bazi-cover .title-area {
+  display: flex;
+  align-items: center; justify-content: center;
+  width: 100%;
+}
+.bazi-cover .main-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 90px; font-weight: 900;
+  color: var(--accent);
+  writing-mode: vertical-rl;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+/* 八字命盤格子 */
+.bazi-cover .bazi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  width: 92%;
+}
+.bazi-cover .bazi-grid .cell {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px 4px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 18px; font-weight: 600;
+  color: var(--c4);
+  border: 1.5px solid var(--c4);
+  background: rgba(255,255,255,0.25);
+  line-height: 1.4;
+}
+.bazi-cover .bazi-grid .cell .cell-label {
+  font-size: 14px; font-weight: 400;
+  color: var(--c5);
+  margin-bottom: 2px;
+}
+.bazi-cover .bazi-grid .cell.highlight {
+  background: var(--accent, #A8745F);
+  color: #fff;
+  font-weight: 700;
+}
+.bazi-cover .bazi-grid .cell.highlight .cell-label {
+  color: rgba(255,255,255,0.8);
+}
+/* 品牌名 */
+.bazi-cover .brand {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px; font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--c5);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* === POLAROID_VINTAGE 復古拍立得 === */
+.polaroid-vintage {
+  width: 100%; height: 100%;
+  background: var(--c1, #EFE4CC);
+  background-image:
+    radial-gradient(ellipse at 20% 15%, rgba(120,80,40,0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 90%, rgba(90,60,30,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 30%, rgba(60,40,20,0.07) 0%, transparent 40%);
+  position: relative;
+  padding: 80px 90px 70px;
+  display: flex; flex-direction: column;
+}
+.polaroid-vintage::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 8% 92%, rgba(80,50,20,0.18) 0%, transparent 8%),
+    radial-gradient(circle at 92% 8%, rgba(80,50,20,0.15) 0%, transparent 7%),
+    radial-gradient(circle at 50% 50%, transparent 60%, rgba(120,80,40,0.12) 100%);
+  pointer-events: none;
+}
+.polaroid-vintage .series-stamp {
+  font-family: 'Noto Serif TC', serif;
+  color: var(--stamp-color, #3A2614);
+  display: flex;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 0;
+}
+.polaroid-vintage .series-stamp span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--stamp-color, #3A2614);
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  text-indent: 0;
+  padding: 0;
+}
+.polaroid-vintage .photo-frame {
+  flex: 0 1 auto;
+  margin: 0 20px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.polaroid-vintage .spacer { flex: 1; }
+.polaroid-vintage .spacer-top { flex: 1.2; }
+.polaroid-vintage .spacer-btm { flex: 0.8; }
+.polaroid-vintage .photo-frame img {
+  width: 100%; max-height: 880px;
+  object-fit: cover;
+  box-shadow: 0 4px 18px rgba(60,40,20,0.25);
+  mix-blend-mode: var(--cover-img-blend, multiply);
+  filter: var(--cover-img-filter, none);
+}
+.polaroid-vintage .photo-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, var(--c1) 120%);
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: soft-light;
+}
+.polaroid-vintage .photo-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: overlay;
+}
+.polaroid-vintage .caption {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 72px; font-weight: 700;
+  color: var(--stamp-color, #2A1A0C);
+  text-align: center;
+  letter-spacing: 0.04em;
+  margin-top: 0;
+  margin-bottom: 0;
+  position: relative; z-index: 2;
+  padding: 0 40px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.polaroid-vintage .brand-stamp {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  color: var(--stamp-color, #5A3A1E);
+  text-align: center;
+  position: relative; z-index: 2;
+}
+
+/* === PHOTO_OVERLAY 全幅照片覆層 === */
+.photo-overlay {
+  width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: #F5F0E6;
+}
+.photo-overlay::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.7) 100%);
+  z-index: 1;
+}
+.photo-overlay .layer {
+  position: relative;
+  z-index: 2;
+  width: 100%; height: 100%;
+  padding: 90px 90px 80px;
+  display: flex; flex-direction: column;
+}
+.photo-overlay .center-block {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+}
+.photo-overlay .center-block.center {
+  align-items: center;
+  text-align: center;
+}
+.photo-overlay .center-block.center .main-title { text-align: center; }
+.photo-overlay .handle-top {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.7);
+  margin-bottom: 24px;
+}
+.photo-overlay .section-en {
+  color: var(--accent, #F59E0B);
+  margin-bottom: 26px;
+}
+.photo-overlay .main-title {
+  font-size: 84px; font-weight: 900; line-height: 1.18;
+  color: #FFFFFF;
+  white-space: pre-line;
+  letter-spacing: -0.005em;
+  margin-bottom: 28px;
+}
+.photo-overlay .main-title .accent { color: var(--accent, #F59E0B); }
+.photo-overlay .sub-title {
+  font-size: 32px; font-weight: 500; line-height: 1.55;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 28px;
+  white-space: pre-line;
+}
+.photo-overlay .body {
+  font-size: 32px; font-weight: 500; line-height: 1.7;
+  color: rgba(255,255,255,0.92);
+  white-space: pre-line;
+  max-width: 880px;
+}
+.photo-overlay .body p { margin-bottom: 16px; }
+.photo-overlay .spacer { flex: 1 1 auto; }
+.photo-overlay .footer-line {
+  display: flex; justify-content: center; align-items: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 400;
+  color: #FFFFFF;
+  letter-spacing: 0.32em;
+}
+.photo-overlay .series-top {
+  margin-bottom: 32px;
+}
+
+/* === QUOTE_PHOTO 金句頁 === */
+.quote-photo {
+  width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: #F5F0E6;
+}
+.quote-photo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 100%);
+  z-index: 1;
+}
+.quote-photo .layer {
+  position: relative; z-index: 2;
+  width: 100%; height: 100%;
+  padding: 110px 100px 90px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.quote-photo .top-tag {
+  position: absolute; top: 90px; left: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.7);
+}
+.quote-photo .section-en {
+  position: absolute; top: 90px; right: 100px;
+  color: var(--accent, #F59E0B);
+}
+.quote-photo .quote-mark {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 110px; line-height: 1; color: rgba(245,240,230,0.85);
+  margin-bottom: -30px; align-self: flex-start; margin-left: -10px;
+}
+.quote-photo .quote-text {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 70px; font-weight: 900; line-height: 1.4;
+  color: #FFFFFF;
+  text-align: left;
+  white-space: pre-line;
+  align-self: stretch;
+  letter-spacing: -0.005em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.quote-photo .quote-text .accent { color: var(--accent, #F59E0B); }
+.quote-photo .quote-end {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 110px; line-height: 0.5; color: rgba(245,240,230,0.85);
+  align-self: flex-end; margin-right: -10px; margin-top: 10px;
+}
+.quote-photo .handle-bottom {
+  position: absolute; bottom: 90px; right: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.85);
+}
+
+/* === 共用 編輯版面 === */
+.page-base {
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, var(--c1) 35%, var(--c2) 85%, var(--c3) 120%);
+  color: var(--c4);
+  padding: 90px 90px 80px;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.page-base .top-row {
+  display: flex; align-items: center;
+  margin-bottom: 50px;
+  gap: 20px;
+}
+.page-base .top-row .line {
+  flex: 1 1 auto;
+}
+.page-base .concept-tag {
+  flex: 0 0 auto;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 32px; font-weight: 700;
+  color: var(--c5);
+  letter-spacing: 0.15em;
+}
+.page-base .stamp-row {
+  display: flex; gap: 6px;
+  flex: 0 0 auto;
+}
+.page-base .stamp-row span {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--c5);
+  border-radius: 50%;
+  width: 56px; height: 56px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700; line-height: 1;
+  text-align: center;
+  padding: 0;
+  color: var(--c5);
+}
+.page-base .body-area {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  z-index: 2;
+}
+.page-base .body-area > * { width: 100%; }
+.page-base .body-area > .btn { width: auto; }
+.page-base .footer-row {
+  margin-top: 50px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  color: var(--c5);
+  position: relative;
+  z-index: 3;
+}
+.page-base .accent {
+  background: linear-gradient(transparent 55%, var(--highlight) 55%, var(--highlight) 88%, transparent 88%);
+  color: inherit;
+  font-weight: inherit;
+  padding: 0 3px;
+}
+.page-base .title {
+  color: var(--c5);
+}
+.page-base .lead { color: #2A2F26; }
+
+/* === NARRATIVE 純敘事 === */
+.narrative .body-area { justify-content: center; }
+.narrative .lead {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 35px; line-height: 1.65; font-weight: 500;
+  color: var(--c4);
+  letter-spacing: 0.02em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  position: relative; z-index: 3;
+  hanging-punctuation: allow-end;
+}
+.narrative .lead .para-gap {
+  display: block;
+  height: 34px;
+}
+.narrative.has-title .title {
+  font-size: 50px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 50px; color: var(--accent);
+  white-space: nowrap; overflow: visible;
+  position: relative; z-index: 3;
+}
+.narrative:not(.has-title) .lead { font-size: 46px; line-height: 1.85; }
+/* 條列項：左對齊 + hanging indent（首行不縮進，後續行對齊到 ・之後） */
+.bullet-line {
+  display: block;
+  padding-left: 1.3em;
+  text-indent: -1.3em;
+  text-align: left;
+}
+.text-line {
+  display: block;
+  text-align: left;
+}
+.text-spacer {
+  display: block;
+  height: 0.5em;
+}
+.narrative.has-illust .body-area,
+.bullet-list.has-illust .body-area,
+.step-flow.has-illust .body-area,
+.cta-button.has-illust .body-area {
+  padding-right: 380px;
+  position: relative;
+  z-index: 2;
+}
+.narrative .note-small {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--c5);
+  text-align: center;
+  margin-top: 12px;
+  letter-spacing: 0.04em;
+  position: relative;
+  z-index: 3;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* 預設：右側小插圖（原本設計）*/
+.narrative .corner-illust,
+.bullet-list .corner-illust,
+.step-flow .corner-illust,
+.cta-button .corner-illust {
+  position: absolute;
+  right: 70px; top: 50%;
+  transform: translateY(-50%);
+  width: 340px; height: 340px;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 0;
+}
+.narrative .corner-illust img,
+.bullet-list .corner-illust img,
+.step-flow .corner-illust img,
+.cta-button .corner-illust img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+/* === BULLET_LIST 列表 === */
+.bullet-list .title {
+  font-size: 50px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 14px; color: var(--accent); white-space: nowrap; overflow: visible;
+}
+.bullet-list .subtitle {
+  font-size: 30px; font-weight: 500; color: var(--c5);
+  margin-bottom: 36px;
+}
+.bullet-list ul {
+  list-style: none; padding: 0; margin: 0;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; line-height: 1.85;
+  color: var(--c4);
+  text-wrap: pretty;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.bullet-list ul li {
+  position: relative; padding-left: 38px; margin-bottom: 18px;
+}
+.bullet-list ul li::before {
+  content: '・'; position: absolute; left: 0; top: -2px;
+  color: var(--accent); font-size: 38px; font-weight: 900;
+}
+
+/* === COMPARE_SPLIT 對比 === */
+.compare-split .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 50px; color: var(--accent); white-space: nowrap;
+}
+.compare-split .title-group {
+  margin-bottom: 50px;
+  display: flex; flex-direction: row;
+  align-items: center; justify-content: flex-start;
+  gap: 32px;
+}
+.compare-split .title-group .title { margin-bottom: 0; }
+.compare-split .subtitle {
+  font-size: 26px; line-height: 1.7; color: var(--ink-soft);
+  font-weight: 500; white-space: pre-line;
+}
+.compare-split .body-area { align-items: stretch; overflow: hidden; }
+.compare-split .columns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+  align-items: stretch;
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+}
+.compare-split .col {
+  min-width: 0;
+  overflow: hidden;
+}
+.compare-split .columns::before {
+  content: 'VS';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Inter', sans-serif;
+  font-size: 28px; font-weight: 900;
+  color: var(--accent);
+  background: var(--c1);
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--accent);
+  z-index: 2;
+}
+.compare-split .col {
+  background: var(--col-left-bg);
+  color: var(--col-left-text);
+  border-radius: 10px;
+  padding: 30px 24px;
+  display: flex; flex-direction: column;
+  border-top: 3px solid var(--col-left-border);
+  min-height: 580px;
+}
+
+/* === A1 BG-IMAGE 模式：卡片緊湊+底圖水印 === */
+.compare-split.compare-bg_image .col {
+  min-height: auto;
+  padding: 28px 28px;
+  justify-content: center;
+}
+.compare-split.compare-bg_image .col .col-illust { display: none; }
+.compare-split.compare-bg_image .columns {
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.compare-split.compare-bg_image .bg-illust {
+  position: absolute;
+  width: 380px; height: 380px;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  z-index: 0;
+}
+.compare-split.compare-bg_image .bg-illust img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+.compare-split.compare-bg_image .bg-illust-left {
+  left: 60px; bottom: 90px;
+}
+.compare-split.compare-bg_image .bg-illust-right {
+  right: 60px; top: 130px;
+}
+.compare-split .col .col-illust {
+  flex: 0 0 280px;
+  height: 280px;
+  display: flex; align-items: center; justify-content: center;
+}
+.compare-split .col .col-illust img {
+  width: 85%; height: 85%;
+  object-fit: contain;
+  object-position: center;
+  mix-blend-mode: multiply;
+}
+.compare-split .col.right .col-illust img {
+  mix-blend-mode: normal;
+}
+.compare-split .col.right {
+  background: var(--accent-bg);
+  color: var(--accent-bg-text);
+  border-top-color: var(--c4);
+}
+.compare-split .col.right h3, .compare-split .col.right .col-body { color: var(--accent-bg-text); }
+.compare-split .col h3 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; font-weight: 900; margin-bottom: 40px;
+}
+.compare-split .col .col-body {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; line-height: 1.4;
+  white-space: pre-line;
+  text-align: left;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+/* === STEP_FLOW 流程 === */
+.step-flow .title-group {
+  display: flex; align-items: center; gap: 24px;
+  margin-bottom: 8px;
+}
+.step-flow .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  color: var(--accent);
+  text-wrap: pretty;
+}
+.step-flow .subtitle {
+  font-size: 28px; font-weight: 500; color: var(--c4);
+  line-height: 1.6; white-space: pre-line;
+}
+.step-flow .steps { display: flex; flex-direction: column; gap: 16px; width: 100%; margin-top: 16px; }
+.step-flow .step {
+  display: flex; align-items: center; gap: 28px;
+  background: var(--c2); border-radius: 10px;
+  padding: 22px 32px;
+}
+.step-flow .step .phase-tag {
+  flex: 0 0 auto;
+  background: var(--accent-bg);
+  color: var(--accent-bg-text);
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 12px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.step-flow { padding-top: 70px; padding-bottom: 60px; }
+.step-flow .body-area { justify-content: center; }
+.step-flow .disclaimer {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 24px; color: var(--c4);
+  text-align: center;
+  margin-top: 24px;
+  letter-spacing: 0.04em;
+}
+.step-flow .step .step-body {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 32px; line-height: 1.55;
+  color: var(--c4);
+  white-space: pre-line;
+}
+.step-flow .step .step-title {
+  font-size: 32px; font-weight: 900; margin-bottom: 8px;
+  color: var(--c4);
+}
+
+/* === BIG_NUMBER 大數字 === */
+.big-number .body-area { justify-content: center; align-items: flex-start; }
+.big-number .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 26px; letter-spacing: 0.22em;
+  color: var(--accent); margin-bottom: 24px;
+}
+.big-number .number {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 240px; font-weight: 900; line-height: 0.9;
+  color: var(--c4); margin-bottom: 36px;
+  letter-spacing: -0.02em;
+}
+.big-number .desc {
+  font-size: 36px; line-height: 1.6; font-weight: 500;
+  color: var(--c4); white-space: pre-line;
+  max-width: 850px;
+}
+
+/* === CTA_BUTTON 行動呼籲 === */
+.cta-button .body-area {
+  justify-content: center; align-items: center; text-align: center;
+  flex: 1;
+}
+.cta-button .lead {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; line-height: 1.85; font-weight: 500;
+  color: var(--c4);
+  white-space: pre-line;
+  letter-spacing: 0.02em;
+  margin-bottom: 48px;
+  text-wrap: pretty;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.cta-button .btn {
+  display: inline-block;
+  background: var(--accent-bg); color: var(--accent-bg-text);
+  padding: 18px 36px; border-radius: 60px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 32px; font-weight: 900;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  white-space: nowrap;
+  width: auto;
+  align-self: center;
+}
+
+/* === CLOSING 結尾頁（留言互動） === */
+.closing {
+  padding-top: 70px; padding-bottom: 70px;
+}
+.closing .body-area {
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  text-align: center;
+}
+.closing .title {
+  font-size: 48px; font-weight: 900;
+  color: var(--c4);
+  margin-bottom: 40px;
+  text-align: center;
+  white-space: pre-line;
+}
+.closing .lead {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 36px; line-height: 1.8; font-weight: 500;
+  color: var(--c4);
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  width: 100%;
+}
+.closing .lead .text-line {
+  display: block;
+  text-align: center;
+}
+.closing .lead .text-spacer {
+  display: block;
+  height: 40px;
+}
+/* 列點區塊：所有 bullet-group 同寬度，左邊緣對齊 */
+.closing .bullet-group {
+  display: block;
+  text-align: left;
+  width: 100%;
+}
+.closing .bullet-group .bullet-line {
+  display: block;
+  text-align: left;
+  padding-left: 0;
+  text-indent: 0;
+}
+.closing .bullet-group .bullet-cont {
+  display: block;
+  text-align: left;
+  padding-left: 1.1em;
+}
+.closing .disclaimer {
+  font-size: 28px;
+  color: var(--accent);
+  text-align: center;
+  font-weight: 500;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+.closing .cta-pill {
+  flex: 0 0 auto;
+  margin-top: 0;
+  background: var(--cta-bg);
+  color: var(--cta-text, var(--accent-bg-text, var(--c1)));
+  padding: 16px 28px;
+  border-radius: 60px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; font-weight: 900;
+  text-align: center;
+  align-self: center;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  white-space: nowrap;
+  width: auto;
+  display: inline-block;
+}
+
+/* === BACK_COVER 封底（profile card） === */
+.back-cover {
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center, var(--c1) 35%, var(--c2) 85%, var(--c3) 120%);
+  color: var(--c4);
+  padding: 0 90px;
+  position: relative;
+}
+.back-cover .text-group {
+  position: absolute;
+  top: 0; left: 90px; right: 90px; bottom: 80px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.back-cover .avatar-wrap {
+  width: 200px;
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 20px;
+}
+.back-cover .avatar-wrap img {
+  width: 200px; height: 200px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.back-cover .avatar-text-overlay {
+  text-align: center;
+  margin-top: -60px;
+  position: relative;
+  z-index: 2;
+}
+.back-cover .avatar-placeholder {
+  width: 100%; height: 100%;
+  background: var(--c2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 64px; font-weight: 900; color: var(--c5);
+}
+.back-cover .display-name {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--c4); margin-bottom: 10px; text-align: center;
+}
+.back-cover .handle-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 30px; font-weight: 500;
+  color: var(--accent); margin-bottom: 16px;
+  letter-spacing: 0.04em; text-align: center;
+}
+.back-cover .tags {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; color: var(--c5);
+  letter-spacing: 0.12em; margin-bottom: 36px; text-align: center;
+}
+.back-cover .cta-line {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; font-weight: 700;
+  color: var(--c4); text-align: center;
+  line-height: 1.6; margin-bottom: 0;
+  white-space: pre-line;
+}
+.back-cover .cta-accent {
+  color: var(--accent); font-weight: 900;
+}
+.back-cover .brand-bottom {
+  position: absolute;
+  bottom: 60px; left: 0; right: 0;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em; color: var(--c5);
+}
+
+</style>
+</head>
+<body style="
+  --c1: {{ palette_obj.colors[0] }};
+  --c2: {{ palette_obj.colors[1] }};
+  --c3: {{ palette_obj.colors[2] }};
+  --c4: {{ palette_obj.colors[3] }};
+  --c5: {{ palette_obj.colors[4] }};
+  --accent: {{ palette_obj.accent }};
+  --accent-bg: {{ palette_obj.accent_bg | default(palette_obj.accent) }};
+  --highlight: {{ palette_obj.highlight | default('#E2C8BB') }};
+  --accent-bg-text: {{ palette_obj.accent_bg_text | default('#fff') }};
+  --cta-bg: {{ palette_obj.cta_bg | default('var(--accent-bg)') }};
+  --cta-text: {{ palette_obj.cta_text | default('var(--accent-bg-text)') }};
+  --col-left-bg: {{ palette_obj.col_left_bg | default('var(--c2)') }};
+  --col-left-text: {{ palette_obj.col_left_text | default('inherit') }};
+  --col-left-border: {{ palette_obj.col_left_border | default('var(--c5)') }};
+  --col-left-img-filter: {{ palette_obj.col_left_img_filter | default('none') }};
+  --col-left-img-blend: {{ palette_obj.col_left_img_blend | default('normal') }};
+  --col-right-img-filter: {{ palette_obj.col_right_img_filter | default('none') }};
+  --col-right-img-blend: {{ palette_obj.col_right_img_blend | default('normal') }};
+  --title-shadow-color: {{ palette_obj.title_shadow | default('transparent') }};
+  --cover-img-blend: {{ palette_obj.cover_img_blend | default('normal') }};
+  --cover-img-filter: {{ palette_obj.cover_img_filter | default('none') }};
+">
+
+{% if layout_variant == 'cover_illust' %}
+<div class="cover-illust">
+  <div class="top">
+    <div class="series-label">{{ series_label or section_label_en }}</div>
+  </div>
+  <div class="mid">
+    <div class="main-title" style="font-size:{{ title_font_size or 96 }}px;{% if title_color %} color:{{ title_color }};{% endif %}">{{ title_html|safe }}</div>
+    {% if subtitle_html and show_subtitle %}<div class="sub-title">{{ subtitle_html|safe }}</div>{% endif %}
+    {% if illustration_path %}
+    <div class="illust-wrap"><img src="{{ illustration_path }}"></div>
+    {% endif %}
+  </div>
+  <div class="bottom">
+    <div class="brand-mark-lg" style="color: var(--c5, #6B7280); flex:1;">{{ brand_mark }}</div>
+  </div>
+</div>
+
+{% elif layout_variant == 'bazi_narrative' %}
+<div class="page-base narrative {% if title %}has-title{% endif %} {% if illustration_path %}has-illust{% endif %} bazi-book">
+  <div class="deco-right">
+    {% for ch in (series_label or '八字觀察') %}<span>{{ ch }}</span>{% endfor %}
+    {% if concept_tag %}
+    <div class="deco-sep"></div>
+    {% set tag_parts = concept_tag.split(' ') if ' ' in concept_tag else concept_tag.split('—') if '—' in concept_tag else [concept_tag] %}
+    {% for part in tag_parts %}
+      {% if loop.last and tag_parts|length > 1 %}
+        <div class="deco-highlight" {% if highlight_style %}style="{{ highlight_style }}"{% endif %}>{{ part }}</div>
+      {% else %}
+        <div class="deco-title">{{ part }}</div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+  <div class="top-row">
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title" {% if title_color %}style="color:{{ title_color }};"{% endif %}>{{ title_html|safe }}</div>{% endif %}
+    <div class="lead">{{ content_html|safe }}</div>
+  </div>
+  {% if illustration_path %}<div class="corner-illust{% if illust_mode == 'large' %} illust-large{% elif illust_mode == 'xl' %} illust-xl{% elif illust_mode == 'full' %} illust-full{% endif %}" {% if illust_offset_x %}data-offset-x="{{ illust_offset_x }}"{% endif %} style="{% if illust_width %}width: {{ illust_width }}px; height: {{ illust_height or illust_width }}px;{% endif %}{% if illust_scale and illust_scale != 1.0 %} transform: translateY(-50%) scale({{ illust_scale }}); top: 50%;{% endif %}{% if illust_opacity is not none and illust_opacity != 1 %} opacity: {{ illust_opacity }};{% endif %}"><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bazi_compare' %}
+<div class="page-base compare-split compare-{{ compare_layout | default('inset') }} bazi-book">
+  <div class="deco-right">
+    {% for ch in (series_label or '八字觀察') %}<span>{{ ch }}</span>{% endfor %}
+    {% if concept_tag %}
+    <div class="deco-sep"></div>
+    {% set tag_parts = concept_tag.split(' ') if ' ' in concept_tag else concept_tag.split('—') if '—' in concept_tag else [concept_tag] %}
+    {% for part in tag_parts %}
+      {% if loop.last and tag_parts|length > 1 %}
+        <div class="deco-highlight" {% if highlight_style %}style="{{ highlight_style }}"{% endif %}>{{ part }}</div>
+      {% else %}
+        <div class="deco-title">{{ part }}</div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+  <div class="top-row">
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+    <div class="columns">
+      <div class="col left">
+        <h3>{{ col_left_title }}</h3>
+        <div class="col-body" {% if compare_font_size %}style="font-size: {{ compare_font_size }}px;"{% endif %}>{{ col_left_content }}</div>
+        {% if col_left_illust %}<div class="col-illust"><img src="{{ col_left_illust }}" {% if col_left_illust_scale and col_left_illust_scale != 1.0 %}style="transform: scale({{ col_left_illust_scale }});"{% endif %}></div>{% endif %}
+      </div>
+      <div class="col right">
+        <h3>{{ col_right_title }}</h3>
+        <div class="col-body" {% if compare_font_size %}style="font-size: {{ compare_font_size }}px;"{% endif %}>{{ col_right_content }}</div>
+        {% if col_right_illust %}<div class="col-illust"><img src="{{ col_right_illust }}" {% if col_right_illust_scale and col_right_illust_scale != 1.0 %}style="transform: scale({{ col_right_illust_scale }});"{% endif %}></div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bazi_step' %}
+<div class="page-base step-flow bazi-book">
+  <div class="deco-right">
+    {% for ch in (series_label or '八字觀察') %}<span>{{ ch }}</span>{% endfor %}
+    {% if concept_tag %}
+    <div class="deco-sep"></div>
+    {% set tag_parts = concept_tag.split(' ') if ' ' in concept_tag else concept_tag.split('—') if '—' in concept_tag else [concept_tag] %}
+    {% for part in tag_parts %}
+      {% if loop.last and tag_parts|length > 1 %}
+        <div class="deco-highlight" {% if highlight_style %}style="{{ highlight_style }}"{% endif %}>{{ part }}</div>
+      {% else %}
+        <div class="deco-title">{{ part }}</div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+  <div class="top-row">
+  </div>
+  <div class="body-area">
+    <div class="title-group">
+      {% if title %}<div class="title" style="font-size: 48px; white-space: nowrap; overflow: hidden;">{{ title_html|safe }}</div>{% endif %}
+      {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    </div>
+    <div class="steps">
+      {% for s in steps %}
+      <div class="step">
+        <div class="phase-tag">{{ s.phase or ('步驟 ' ~ loop.index) }}</div>
+        <div>
+          {% if s.title %}<div class="step-title">{{ s.title }}</div>{% endif %}
+          <div class="step-body">{{ s.body }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bazi_closing' %}
+<div class="page-base closing bazi-book">
+  <div class="deco-right">
+    {% for ch in (series_label or '八字觀察') %}<span>{{ ch }}</span>{% endfor %}
+    {% if concept_tag %}
+    <div class="deco-sep"></div>
+    {% set tag_parts = concept_tag.split(' ') if ' ' in concept_tag else concept_tag.split('—') if '—' in concept_tag else [concept_tag] %}
+    {% for part in tag_parts %}
+      {% if loop.last and tag_parts|length > 1 %}
+        <div class="deco-highlight" {% if highlight_style %}style="{{ highlight_style }}"{% endif %}>{{ part }}</div>
+      {% else %}
+        <div class="deco-title">{{ part }}</div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+  <div class="top-row"></div>
+  <div class="body-area">
+    {% if title %}<div class="title" {% if title_color %}style="color:{{ title_color }};"{% endif %}>{{ title_html|safe }}</div>{% endif %}
+    <div class="lead">{{ content_html|safe }}</div>
+    <div class="disclaimer">📝 學習中的觀察筆記，僅供參考</div>
+    {% if cta_text %}<div class="cta-pill">{{ cta_text }}</div>{% endif %}
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bazi_cover' %}
+<div class="bazi-cover {{ cover_style or '' }}">
+  <div class="cover-left">
+    {% if illustration_path %}<img src="{{ illustration_path }}">{% endif %}
+  </div>
+  <div class="cover-right">
+    <div class="stamp-col">
+      {% for ch in (series_label or '八字觀察') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+    <div style="flex:1"></div>
+    <div class="title-area">
+      <div class="main-title" {% if title_color %}style="color:{{ title_color }};"{% endif %}>{{ title_html|safe }}</div>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%;">
+      {% if bazi_grid %}
+      <div class="bazi-grid">
+        {% for cell in bazi_grid.top %}<div class="cell {% if bazi_grid.highlight == loop.index0 %}highlight{% endif %}">{{ cell }}</div>{% endfor %}
+        {% for cell in bazi_grid.bottom %}<div class="cell {% if bazi_grid.highlight == (loop.index0 + 4) %}highlight{% endif %}">{{ cell }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="brand">{{ brand_mark }}</div>
+  </div>
+</div>
+
+{% elif layout_variant == 'polaroid_vintage' %}
+<div class="polaroid-vintage" style="--stamp-color: var(--c5);">
+  <div class="series-stamp">
+    {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+  </div>
+  {% set _tlen = (title or '')|replace('==','')|length %}
+  {% if _tlen <= 8 %}{% set _tsize = 88 %}
+  {% elif _tlen <= 11 %}{% set _tsize = 72 %}
+  {% elif _tlen <= 14 %}{% set _tsize = 58 %}
+  {% elif _tlen <= 17 %}{% set _tsize = 48 %}
+  {% elif _tlen <= 21 %}{% set _tsize = 40 %}
+  {% else %}{% set _tsize = 34 %}{% endif %}
+  <div class="spacer-top"></div>
+  {% if illustration_path %}
+  <div class="photo-frame"><img src="{{ illustration_path }}"></div>
+  {% endif %}
+  <div class="spacer"></div>
+  <div class="caption" style="font-size: {{ _tsize }}px;">{{ title_html|safe }}</div>
+  <div class="spacer-btm"></div>
+  <div class="brand-stamp">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'photo_overlay' %}
+<div class="photo-overlay" {% if illustration_path %}style="background-image: url('{{ illustration_path }}');"{% else %}style="background:#1A1A1C;"{% endif %}>
+  <div class="layer">
+    <div class="series-label series-top">{{ series_label or section_label_en }}</div>
+    <div class="center-block">
+      <div class="main-title" style="font-size:{{ title_font_size or 84 }}px;">{{ title_html|safe }}</div>
+      {% if subtitle_html %}<div class="sub-title" style="font-size:{{ subtitle_font_size or 32 }}px;">{{ subtitle_html|safe }}</div>{% endif %}
+      {% if content_html %}<div class="body" style="font-size:{{ body_font_size or 32 }}px;">{{ content_html|safe }}</div>{% endif %}
+    </div>
+    <div class="footer-line">
+      <span>{{ brand_mark }}</span>
+    </div>
+  </div>
+</div>
+
+{% elif layout_variant == 'quote_photo' %}
+<div class="photo-overlay" {% if illustration_path %}style="background-image: url('{{ illustration_path }}');"{% else %}style="background:#1A1A1C;"{% endif %}>
+  <div class="layer">
+    <div class="series-label series-top">{{ series_label or section_label_en }}</div>
+    <div class="center-block center">
+      <div class="main-title" style="font-size:78px;">{{ content_html|safe }}</div>
+    </div>
+    <div class="footer-line">
+      <span>{{ brand_mark }}</span>
+    </div>
+  </div>
+</div>
+
+{% elif layout_variant == 'narrative' %}
+<div class="page-base narrative {% if title %}has-title{% endif %} {% if illustration_path %}has-illust{% endif %}">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}
+      <div class="title">{{ title_html|safe }}</div>
+    {% endif %}
+    <div class="lead">{{ content_html|safe }}</div>
+    {% if note_small %}<div class="note-small">{{ note_small }}</div>{% endif %}
+  </div>
+  {% if illustration_path %}<div class="corner-illust" {% if illust_scale and illust_scale != 1.0 %}style="transform: translateY(-50%) scale({{ illust_scale }}); top: 50%;"{% endif %}><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bullet_list' %}
+<div class="page-base bullet-list {% if illustration_path %}has-illust{% endif %}">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+    {% if subtitle %}<div class="subtitle">{{ subtitle_html|safe }}</div>{% endif %}
+    <ul>
+      {% for item in items %}<li>{{ item|safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% if illustration_path %}<div class="corner-illust" {% if illust_scale and illust_scale != 1.0 %}style="transform: translateY(-50%) scale({{ illust_scale }}); top: 50%;"{% endif %}><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'compare_split' %}
+<div class="page-base compare-split compare-{{ compare_layout | default('inset') }}">
+  {% if compare_layout == 'bg_image' %}
+    {% if col_left_illust %}<div class="bg-illust bg-illust-left"><img src="{{ col_left_illust }}"></div>{% endif %}
+    {% if col_right_illust %}<div class="bg-illust bg-illust-right"><img src="{{ col_right_illust }}"></div>{% endif %}
+  {% endif %}
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title or subtitle %}
+    <div class="title-group">
+      {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+      {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="columns">
+      <div class="col left">
+        <h3>{{ col_left_title }}</h3>
+        <div class="col-body" {% if compare_font_size %}style="font-size: {{ compare_font_size }}px;"{% endif %}>{{ col_left_content }}</div>
+        {% if col_left_illust and compare_layout != 'bg_image' %}<div class="col-illust"><img src="{{ col_left_illust }}"></div>{% endif %}
+      </div>
+      <div class="col right">
+        <h3>{{ col_right_title }}</h3>
+        <div class="col-body" {% if compare_font_size %}style="font-size: {{ compare_font_size }}px;"{% endif %}>{{ col_right_content }}</div>
+        {% if col_right_illust and compare_layout != 'bg_image' %}<div class="col-illust"><img src="{{ col_right_illust }}"></div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'step_flow' %}
+<div class="page-base step-flow {% if illustration_path %}has-illust{% endif %}">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="title-group">
+      {% if title %}
+        <div class="title" style="font-size: 48px; white-space: nowrap; overflow: hidden;">{{ title_html|safe }}</div>
+      {% endif %}
+      {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    </div>
+    <div class="steps">
+      {% for s in steps %}
+      <div class="step">
+        <div class="phase-tag">{{ s.phase or ('步驟 ' ~ loop.index) }}</div>
+        <div>
+          {% if s.title %}<div class="step-title">{{ s.title }}</div>{% endif %}
+          <div class="step-body">{{ s.body }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if cta_small %}<div class="disclaimer">{{ cta_small }}</div>{% endif %}
+  </div>
+  {% if illustration_path %}<div class="corner-illust" {% if illust_scale and illust_scale != 1.0 %}style="transform: translateY(-50%) scale({{ illust_scale }}); top: 50%;"{% endif %}><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'big_number' %}
+<div class="page-base big-number">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="label">{{ section_label_en or 'INSIGHT' }}</div>
+    <div class="number">{{ big_number }}</div>
+    <div class="desc">{{ content_html|safe }}</div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'cta_button' %}
+<div class="page-base cta-button {% if illustration_path %}has-illust{% endif %}">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="lead">{{ content_html|safe }}</div>
+    {% if cta_text %}<div class="btn">{{ cta_text }}</div>{% endif %}
+  </div>
+  {% if illustration_path %}<div class="corner-illust" {% if illust_scale and illust_scale != 1.0 %}style="transform: translateY(-50%) scale({{ illust_scale }}); top: 50%;"{% endif %}><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'closing' %}
+<div class="page-base closing">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title" {% if title_color %}style="color:{{ title_color }};"{% endif %}>{{ title_html|safe }}</div>{% endif %}
+    <div class="lead">{{ content_html|safe }}</div>
+    <div class="disclaimer">📝 學習中的觀察筆記，僅供參考</div>
+    {% if cta_text %}<div class="cta-pill">{{ cta_text }}</div>{% endif %}
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'back_cover' %}
+<div class="back-cover">
+  <div class="text-group">
+    <div class="avatar-wrap">
+      {% if illustration_path %}
+      <img src="{{ illustration_path }}">
+      {% else %}
+      <div class="avatar-placeholder">J</div>
+      {% endif %}
+    </div>
+    <div class="display-name">{{ title or 'Jhen心觀測站' }}</div>
+    <div class="handle-text">{{ handle }}</div>
+    <div class="tags">{{ subtitle or '八字 / 牌卡 / 覺察' }}</div>
+    <div class="cta-line">{{ content_html|safe }}</div>
+  </div>
+  <div class="brand-bottom">{{ brand_mark }}</div>
+</div>
+
+{% else %}
+<div class="cover-illust">
+  <div class="top"><div class="section-en">{{ section_label_en or 'EDITORIAL' }}</div></div>
+  <div class="mid">
+    <div class="main-title">{{ title_html|safe }}</div>
+    <div class="sub-title">{{ content_html|safe }}</div>
+  </div>
+  <div class="bottom">
+    <div class="brand-mark">{{ brand_mark }}</div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+/* bazi-book 插圖自動居中：根據實際文字寬度 + 裝飾邊位置動態定位 */
+/* 支援 data-offset-x 做相對偏移（正值往右、負值往左） */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.bazi-book .corner-illust').forEach(function(illust) {
+    var page = illust.closest('.page-base');
+    if (!page) return;
+    var body = page.querySelector('.body-area');
+    var deco = page.querySelector('.deco-right');
+    if (!body || !deco) return;
+
+    /* 測量文字實際渲染寬度（用 Range 取最後一行的右邊界） */
+    var maxRight = 0;
+    body.querySelectorAll('.title, .lead, li, .step-body, .col-body, .card-body, .step-title, .card-title').forEach(function(el) {
+      /* 遍歷所有文字節點，找到實際最右邊界 */
+      var range = document.createRange();
+      var textNodes = [];
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+      var node;
+      while (node = walker.nextNode()) textNodes.push(node);
+      for (var i = 0; i < textNodes.length; i++) {
+        range.selectNodeContents(textNodes[i]);
+        var rects = range.getClientRects();
+        for (var j = 0; j < rects.length; j++) {
+          if (rects[j].right > maxRight) maxRight = rects[j].right;
+        }
+      }
+    });
+    if (maxRight === 0) maxRight = body.getBoundingClientRect().right;
+    /* 加一點呼吸空間 */
+    maxRight += 10;
+
+    var decoLeft = deco.getBoundingClientRect().left;
+    var illustWidth = illust.offsetWidth;
+    var gap = decoLeft - maxRight;
+    var center = maxRight + gap / 2;
+    var newLeft = center - illustWidth / 2;
+
+    /* 套用偏移量（data-offset-x） */
+    var offsetX = parseInt(illust.getAttribute('data-offset-x') || '0', 10);
+    newLeft += offsetX;
+
+    if (newLeft < maxRight + 20) newLeft = maxRight + 20;
+    if (newLeft + illustWidth > decoLeft - 20) newLeft = decoLeft - 20 - illustWidth;
+
+    illust.style.left = newLeft + 'px';
+    illust.style.right = 'auto';
+  });
+});
+</script>
+
+</body>
+</html>

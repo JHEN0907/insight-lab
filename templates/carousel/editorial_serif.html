@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Editorial Serif</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1350px; }
+body {
+  font-family: 'Noto Serif TC', serif;
+  background: var(--c1, #F5F0E6);
+  color: var(--c4, #1F2E27);
+  width: 1080px;
+  height: 1350px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* === 共用 === */
+.section-en {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent, #A8745F);
+  text-transform: uppercase;
+}
+.brand-mark {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  color: var(--c5, #6B7280);
+  text-align: center;
+}
+.series-label {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--accent, #A8745F);
+}
+.series-stamp-row {
+  display: flex; gap: 6px;
+  font-family: 'Noto Serif TC', serif;
+}
+.series-stamp-row span {
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--stamp-color, currentColor);
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  font-size: 30px; font-weight: 700; line-height: 1;
+  color: var(--stamp-color, currentColor);
+}
+.brand-mark-lg {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  text-align: center;
+}
+.handle {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+}
+.accent { color: var(--accent, #A8745F); }
+
+/* === COVER_ILLUST 封面 === */
+.cover-illust {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  padding: 90px 90px 70px;
+}
+.cover-illust .top {
+  flex: 0 0 auto;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.cover-illust .top .edition-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent, #A8745F);
+}
+.cover-illust .bottom {
+  justify-content: center !important;
+}
+.cover-illust .bottom .brand-mark {
+  flex: 0 1 auto;
+}
+.cover-illust .mid {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+}
+.cover-illust .main-title {
+  font-size: 96px; font-weight: 900; line-height: 1.15;
+  margin-bottom: 28px; letter-spacing: -0.01em;
+  white-space: pre-line;
+}
+.cover-illust .sub-title {
+  font-size: 32px; font-weight: 500; color: var(--c5, #6B7280);
+  line-height: 1.55; max-width: 800px;
+  white-space: pre-line;
+}
+.cover-illust .illust-wrap {
+  margin: 40px 0 20px;
+  display: flex; justify-content: center;
+}
+.cover-illust .illust-wrap img {
+  width: 760px; height: 760px; object-fit: contain;
+}
+.cover-illust .bottom {
+  flex: 0 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* === POLAROID_VINTAGE 復古拍立得 === */
+.polaroid-vintage {
+  width: 100%; height: 100%;
+  background: var(--c1, #EFE4CC);
+  background-image:
+    radial-gradient(ellipse at 20% 15%, rgba(120,80,40,0.10) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 90%, rgba(90,60,30,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 30%, rgba(60,40,20,0.07) 0%, transparent 40%);
+  position: relative;
+  padding: 80px 90px 70px;
+  display: flex; flex-direction: column;
+}
+.polaroid-vintage::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 8% 92%, rgba(80,50,20,0.18) 0%, transparent 8%),
+    radial-gradient(circle at 92% 8%, rgba(80,50,20,0.15) 0%, transparent 7%),
+    radial-gradient(circle at 50% 50%, transparent 60%, rgba(120,80,40,0.12) 100%);
+  pointer-events: none;
+}
+.polaroid-vintage .series-stamp {
+  font-family: 'Noto Serif TC', serif;
+  color: var(--stamp-color, #3A2614);
+  display: flex;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 36px;
+}
+.polaroid-vintage .series-stamp span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--stamp-color, #3A2614);
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  text-indent: 0;
+  padding: 0;
+}
+.polaroid-vintage .photo-frame {
+  flex: 1 1 auto;
+  margin: 30px 20px 30px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.polaroid-vintage .photo-frame img {
+  width: 100%; max-height: 880px;
+  object-fit: cover;
+  box-shadow: 0 4px 18px rgba(60,40,20,0.25);
+}
+.polaroid-vintage .caption {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 56px; font-weight: 700;
+  color: var(--stamp-color, #2A1A0C);
+  text-align: center;
+  letter-spacing: 0.04em;
+  margin-bottom: 32px;
+  position: relative; z-index: 2;
+}
+.polaroid-vintage .brand-stamp {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  color: var(--stamp-color, #5A3A1E);
+  text-align: center;
+  position: relative; z-index: 2;
+}
+
+/* === PHOTO_OVERLAY 全幅照片覆層 === */
+.photo-overlay {
+  width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: #F5F0E6;
+}
+.photo-overlay::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.7) 100%);
+  z-index: 1;
+}
+.photo-overlay .layer {
+  position: relative;
+  z-index: 2;
+  width: 100%; height: 100%;
+  padding: 90px 90px 80px;
+  display: flex; flex-direction: column;
+}
+.photo-overlay .center-block {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+}
+.photo-overlay .center-block.center {
+  align-items: center;
+  text-align: center;
+}
+.photo-overlay .center-block.center .main-title { text-align: center; }
+.photo-overlay .handle-top {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.7);
+  margin-bottom: 24px;
+}
+.photo-overlay .section-en {
+  color: var(--accent, #F59E0B);
+  margin-bottom: 26px;
+}
+.photo-overlay .main-title {
+  font-size: 84px; font-weight: 900; line-height: 1.18;
+  color: #FFFFFF;
+  white-space: pre-line;
+  letter-spacing: -0.005em;
+  margin-bottom: 28px;
+}
+.photo-overlay .main-title .accent { color: var(--accent, #F59E0B); }
+.photo-overlay .sub-title {
+  font-size: 32px; font-weight: 500; line-height: 1.55;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 28px;
+  white-space: pre-line;
+}
+.photo-overlay .body {
+  font-size: 32px; font-weight: 500; line-height: 1.7;
+  color: rgba(255,255,255,0.92);
+  white-space: pre-line;
+  max-width: 880px;
+}
+.photo-overlay .body p { margin-bottom: 16px; }
+.photo-overlay .spacer { flex: 1 1 auto; }
+.photo-overlay .footer-line {
+  display: flex; justify-content: center; align-items: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 400;
+  color: #FFFFFF;
+  letter-spacing: 0.32em;
+}
+.photo-overlay .series-top {
+  margin-bottom: 32px;
+}
+
+/* === QUOTE_PHOTO 金句頁 === */
+.quote-photo {
+  width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: #F5F0E6;
+}
+.quote-photo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 100%);
+  z-index: 1;
+}
+.quote-photo .layer {
+  position: relative; z-index: 2;
+  width: 100%; height: 100%;
+  padding: 110px 100px 90px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.quote-photo .top-tag {
+  position: absolute; top: 90px; left: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.7);
+}
+.quote-photo .section-en {
+  position: absolute; top: 90px; right: 100px;
+  color: var(--accent, #F59E0B);
+}
+.quote-photo .quote-mark {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 110px; line-height: 1; color: rgba(245,240,230,0.85);
+  margin-bottom: -30px; align-self: flex-start; margin-left: -10px;
+}
+.quote-photo .quote-text {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 70px; font-weight: 900; line-height: 1.4;
+  color: #FFFFFF;
+  text-align: left;
+  white-space: pre-line;
+  align-self: stretch;
+  letter-spacing: -0.005em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.quote-photo .quote-text .accent { color: var(--accent, #F59E0B); }
+.quote-photo .quote-end {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 110px; line-height: 0.5; color: rgba(245,240,230,0.85);
+  align-self: flex-end; margin-right: -10px; margin-top: 10px;
+}
+.quote-photo .handle-bottom {
+  position: absolute; bottom: 90px; right: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; color: rgba(255,255,255,0.85);
+}
+
+/* === 共用 編輯版面 === */
+.page-base {
+  width: 100%; height: 100%;
+  background: var(--c1);
+  color: var(--c4);
+  padding: 90px 90px 80px;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.page-base .top-row {
+  display: flex; justify-content: flex-start; align-items: baseline;
+  margin-bottom: 0;
+}
+.page-base .stamp-row { display: flex; gap: 6px; }
+.page-base .stamp-row span {
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--c5);
+  border-radius: 50%;
+  width: 56px; height: 56px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700; line-height: 1;
+  color: var(--c5);
+}
+.page-base .body-area {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.page-base .body-area > * { width: 100%; }
+.page-base .body-area > .btn { width: auto; }
+.page-base .footer-row {
+  margin-top: 30px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em;
+  color: var(--c5);
+}
+.page-base .accent {
+  background: linear-gradient(transparent 55%, #E6D9A2 55%, #E6D9A2 88%, transparent 88%);
+  color: inherit;
+  font-weight: inherit;
+  padding: 0 3px;
+}
+.page-base .title {
+  color: var(--c5);
+}
+.page-base .lead { color: #2A2F26; }
+
+/* === NARRATIVE 純敘事 === */
+.narrative .body-area { justify-content: center; }
+.narrative .lead {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; line-height: 1.85; font-weight: 500;
+  color: var(--c4);
+  white-space: pre-line;
+  letter-spacing: 0.02em;
+}
+.narrative.has-title .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 36px; color: var(--accent);
+  white-space: pre-line;
+}
+.narrative:not(.has-title) .lead { font-size: 46px; line-height: 1.85; }
+.narrative .corner-illust {
+  position: absolute;
+  right: 30px; top: 50%;
+  transform: translateY(-50%);
+  width: 460px; height: 460px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.95;
+  z-index: 0;
+}
+.narrative.has-illust .body-area { padding-right: 0; max-width: 640px; position: relative; z-index: 1; }
+.narrative .corner-illust img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  -webkit-mask-image: radial-gradient(circle at center, #000 25%, rgba(0,0,0,0.6) 40%, transparent 60%);
+          mask-image: radial-gradient(circle at center, #000 25%, rgba(0,0,0,0.6) 40%, transparent 60%);
+}
+
+/* === BULLET_LIST 列表 === */
+.bullet-list .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 14px; color: var(--accent); white-space: pre-line;
+}
+.bullet-list .subtitle {
+  font-size: 30px; font-weight: 500; color: var(--c5);
+  margin-bottom: 36px;
+}
+.bullet-list ul {
+  list-style: none; padding: 0; margin: 0;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; line-height: 1.85;
+  color: var(--c4);
+}
+.bullet-list ul li {
+  position: relative; padding-left: 38px; margin-bottom: 18px;
+}
+.bullet-list ul li::before {
+  content: '・'; position: absolute; left: 0; top: -2px;
+  color: var(--accent); font-size: 38px; font-weight: 900;
+}
+
+/* === COMPARE_SPLIT 對比 === */
+.compare-split .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  margin-bottom: 36px; color: var(--accent); white-space: pre-line;
+}
+.compare-split .body-area { align-items: stretch; }
+.compare-split .columns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+  align-items: stretch;
+  position: relative;
+}
+.compare-split .columns::before {
+  content: 'VS';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Inter', sans-serif;
+  font-size: 28px; font-weight: 900;
+  color: var(--accent);
+  background: var(--c1);
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--accent);
+  z-index: 2;
+}
+.compare-split .col {
+  background: var(--c2);
+  border-radius: 10px;
+  padding: 36px 32px;
+  display: flex; flex-direction: column;
+  border-top: 4px solid var(--c5);
+  min-height: 580px;
+}
+.compare-split .col .col-illust {
+  flex: 1 1 auto;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 260px;
+}
+.compare-split .col .col-illust img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  object-position: center;
+  mix-blend-mode: multiply;
+}
+.compare-split .col.right .col-illust img {
+  mix-blend-mode: normal;
+  filter: none;
+}
+.compare-split .col .col-illust img {
+  width: 85%; height: 85%;
+}
+.compare-split .col.right {
+  background: var(--accent);
+  color: #fff;
+  border-top-color: var(--c4);
+}
+.compare-split .col.right h3, .compare-split .col.right .col-body { color: #fff; }
+.compare-split .col h3 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; font-weight: 900; margin-bottom: 18px;
+}
+.compare-split .col .col-body {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 28px; line-height: 1.7;
+  white-space: pre-line;
+}
+
+/* === STEP_FLOW 流程 === */
+.step-flow .title-group {
+  display: flex; align-items: center; gap: 24px;
+  margin-bottom: 8px;
+}
+.step-flow .title {
+  font-size: 56px; font-weight: 900; line-height: 1.25;
+  color: var(--accent); white-space: nowrap;
+}
+.step-flow .subtitle {
+  font-size: 28px; font-weight: 500; color: var(--c4);
+  line-height: 1.6; white-space: pre-line;
+}
+.step-flow .steps { display: flex; flex-direction: column; gap: 16px; width: 100%; margin-top: 16px; }
+.step-flow .step {
+  display: flex; align-items: center; gap: 28px;
+  background: var(--c2); border-radius: 10px;
+  padding: 22px 32px;
+}
+.step-flow .step .phase-tag {
+  flex: 0 0 auto;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 26px; font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 12px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.step-flow { padding-top: 70px; padding-bottom: 60px; }
+.step-flow .body-area { justify-content: center; }
+.step-flow .disclaimer {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 24px; color: var(--c4);
+  text-align: center;
+  margin-top: 24px;
+  letter-spacing: 0.04em;
+}
+.step-flow .step .step-body {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 28px; line-height: 1.55;
+  color: var(--c4);
+  white-space: pre-line;
+}
+.step-flow .step .step-title {
+  font-size: 32px; font-weight: 900; margin-bottom: 6px;
+  color: var(--c4);
+}
+
+/* === BIG_NUMBER 大數字 === */
+.big-number .body-area { justify-content: center; align-items: flex-start; }
+.big-number .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 26px; letter-spacing: 0.22em;
+  color: var(--accent); margin-bottom: 24px;
+}
+.big-number .number {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 240px; font-weight: 900; line-height: 0.9;
+  color: var(--c4); margin-bottom: 36px;
+  letter-spacing: -0.02em;
+}
+.big-number .desc {
+  font-size: 36px; line-height: 1.6; font-weight: 500;
+  color: var(--c4); white-space: pre-line;
+  max-width: 850px;
+}
+
+/* === CTA_BUTTON 行動呼籲 === */
+.cta-button .body-area {
+  justify-content: center; align-items: center; text-align: center;
+  flex: 1;
+}
+.cta-button .lead {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; line-height: 1.85; font-weight: 500;
+  color: var(--c4);
+  white-space: pre-line;
+  letter-spacing: 0.02em;
+  margin-bottom: 48px;
+}
+.cta-button .btn {
+  display: inline-block;
+  background: var(--accent); color: #fff;
+  padding: 18px 36px; border-radius: 60px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 32px; font-weight: 900;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  white-space: nowrap;
+  width: auto;
+  align-self: center;
+}
+
+/* === BACK_COVER 封底（profile card） === */
+.back-cover {
+  width: 100%; height: 100%;
+  background: var(--c1); color: var(--c4);
+  padding: 0 90px;
+  position: relative;
+}
+.back-cover .text-group {
+  position: absolute;
+  top: 0; left: 90px; right: 90px; bottom: 80px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.back-cover .avatar-wrap {
+  width: 200px;
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 20px;
+}
+.back-cover .avatar-wrap img {
+  width: 200px; height: 200px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.back-cover .avatar-text-overlay {
+  text-align: center;
+  margin-top: -60px;
+  position: relative;
+  z-index: 2;
+}
+.back-cover .avatar-placeholder {
+  width: 100%; height: 100%;
+  background: var(--c2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 64px; font-weight: 900; color: var(--c5);
+}
+.back-cover .display-name {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; font-weight: 700;
+  color: var(--c4); margin-bottom: 10px; text-align: center;
+}
+.back-cover .handle-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 30px; font-weight: 500;
+  color: var(--accent); margin-bottom: 16px;
+  letter-spacing: 0.04em; text-align: center;
+}
+.back-cover .tags {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 30px; color: var(--c5);
+  letter-spacing: 0.12em; margin-bottom: 36px; text-align: center;
+}
+.back-cover .cta-line {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 38px; font-weight: 700;
+  color: var(--accent); text-align: center;
+  line-height: 1.6; margin-bottom: 0;
+  white-space: pre-line;
+}
+.back-cover .cta-accent {
+  color: var(--accent); font-weight: 900;
+}
+.back-cover .brand-bottom {
+  position: absolute;
+  bottom: 60px; left: 0; right: 0;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: 0.32em; color: var(--c5);
+}
+
+</style>
+</head>
+<body style="
+  --c1: {{ palette_obj.colors[0] }};
+  --c2: {{ palette_obj.colors[1] }};
+  --c3: {{ palette_obj.colors[2] }};
+  --c4: {{ palette_obj.colors[3] }};
+  --c5: {{ palette_obj.colors[4] }};
+  --accent: {{ palette_obj.accent }};
+">
+
+{% if layout_variant == 'cover_illust' %}
+<div class="cover-illust">
+  <div class="top">
+    <div class="series-label">{{ series_label or section_label_en }}</div>
+  </div>
+  <div class="mid">
+    <div class="main-title" style="font-size:{{ title_font_size or 96 }}px;">{{ title_html|safe }}</div>
+    {% if subtitle_html and show_subtitle %}<div class="sub-title">{{ subtitle_html|safe }}</div>{% endif %}
+    {% if illustration_path %}
+    <div class="illust-wrap"><img src="{{ illustration_path }}"></div>
+    {% endif %}
+  </div>
+  <div class="bottom">
+    <div class="brand-mark-lg" style="color: var(--c5, #6B7280); flex:1;">{{ brand_mark }}</div>
+  </div>
+</div>
+
+{% elif layout_variant == 'polaroid_vintage' %}
+<div class="polaroid-vintage" style="--stamp-color: var(--c5);">
+  <div class="series-stamp">
+    {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+  </div>
+  {% if illustration_path %}
+  <div class="photo-frame"><img src="{{ illustration_path }}"></div>
+  {% endif %}
+  <div class="caption">{{ title_html|safe }}</div>
+  <div class="brand-stamp">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'photo_overlay' %}
+<div class="photo-overlay" {% if illustration_path %}style="background-image: url('{{ illustration_path }}');"{% else %}style="background:#1A1A1C;"{% endif %}>
+  <div class="layer">
+    <div class="series-label series-top">{{ series_label or section_label_en }}</div>
+    <div class="center-block">
+      <div class="main-title" style="font-size:{{ title_font_size or 84 }}px;">{{ title_html|safe }}</div>
+      {% if subtitle_html %}<div class="sub-title" style="font-size:{{ subtitle_font_size or 32 }}px;">{{ subtitle_html|safe }}</div>{% endif %}
+      {% if content_html %}<div class="body" style="font-size:{{ body_font_size or 32 }}px;">{{ content_html|safe }}</div>{% endif %}
+    </div>
+    <div class="footer-line">
+      <span>{{ brand_mark }}</span>
+    </div>
+  </div>
+</div>
+
+{% elif layout_variant == 'quote_photo' %}
+<div class="photo-overlay" {% if illustration_path %}style="background-image: url('{{ illustration_path }}');"{% else %}style="background:#1A1A1C;"{% endif %}>
+  <div class="layer">
+    <div class="series-label series-top">{{ series_label or section_label_en }}</div>
+    <div class="center-block center">
+      <div class="main-title" style="font-size:78px;">{{ content_html|safe }}</div>
+    </div>
+    <div class="footer-line">
+      <span>{{ brand_mark }}</span>
+    </div>
+  </div>
+</div>
+
+{% elif layout_variant == 'narrative' %}
+<div class="page-base narrative {% if title %}has-title{% endif %} {% if illustration_path %}has-illust{% endif %}">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+    <div class="lead">{{ content_html|safe }}</div>
+  </div>
+  {% if illustration_path %}<div class="corner-illust"><img src="{{ illustration_path }}"></div>{% endif %}
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'bullet_list' %}
+<div class="page-base bullet-list">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+    {% if subtitle %}<div class="subtitle">{{ subtitle_html|safe }}</div>{% endif %}
+    <ul>
+      {% for item in items %}<li>{{ item|safe }}</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'compare_split' %}
+<div class="page-base compare-split">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+    <div class="columns">
+      <div class="col left">
+        <h3>{{ col_left_title }}</h3>
+        <div class="col-body">{{ col_left_content }}</div>
+        {% if col_left_illust %}<div class="col-illust"><img src="{{ col_left_illust }}"></div>{% endif %}
+      </div>
+      <div class="col right">
+        <h3>{{ col_right_title }}</h3>
+        <div class="col-body">{{ col_right_content }}</div>
+        {% if col_right_illust %}<div class="col-illust"><img src="{{ col_right_illust }}"></div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'step_flow' %}
+<div class="page-base step-flow">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="title-group">
+      {% if title %}<div class="title">{{ title_html|safe }}</div>{% endif %}
+      {% if subtitle %}<div class="subtitle">{{ subtitle }}</div>{% endif %}
+    </div>
+    <div class="steps">
+      {% for s in steps %}
+      <div class="step">
+        <div class="phase-tag">{{ s.phase or ('步驟 ' ~ loop.index) }}</div>
+        <div>
+          {% if s.title %}<div class="step-title">{{ s.title }}</div>{% endif %}
+          <div class="step-body">{{ s.body }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if cta_small %}<div class="disclaimer">{{ cta_small }}</div>{% endif %}
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'big_number' %}
+<div class="page-base big-number">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="label">{{ section_label_en or 'INSIGHT' }}</div>
+    <div class="number">{{ big_number }}</div>
+    <div class="desc">{{ content_html|safe }}</div>
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'cta_button' %}
+<div class="page-base cta-button">
+  <div class="top-row">
+    <div class="stamp-row">
+      {% for ch in (series_label or '看劇說八字') %}<span>{{ ch }}</span>{% endfor %}
+    </div>
+  </div>
+  <div class="body-area">
+    <div class="lead">{{ content_html|safe }}</div>
+    {% if cta_text %}<div class="btn">{{ cta_text }}</div>{% endif %}
+  </div>
+  <div class="footer-row">{{ brand_mark }}</div>
+</div>
+
+{% elif layout_variant == 'back_cover' %}
+<div class="back-cover">
+  <div class="text-group">
+    <div class="avatar-wrap">
+      {% if illustration_path %}
+      <img src="{{ illustration_path }}">
+      {% else %}
+      <div class="avatar-placeholder">J</div>
+      {% endif %}
+    </div>
+    <div class="display-name">{{ title or 'Jhen心觀測站' }}</div>
+    <div class="handle-text">{{ handle }}</div>
+    <div class="tags">{{ subtitle or '八字 / 牌卡 / 覺察' }}</div>
+    <div class="cta-line">{{ content_html|safe }}</div>
+  </div>
+  <div class="brand-bottom">{{ brand_mark }}</div>
+</div>
+
+{% else %}
+<div class="cover-illust">
+  <div class="top"><div class="section-en">{{ section_label_en or 'EDITORIAL' }}</div></div>
+  <div class="mid">
+    <div class="main-title">{{ title_html|safe }}</div>
+    <div class="sub-title">{{ content_html|safe }}</div>
+  </div>
+  <div class="bottom">
+    <div class="brand-mark">{{ brand_mark }}</div>
+  </div>
+</div>
+{% endif %}
+
+</body>
+</html>
