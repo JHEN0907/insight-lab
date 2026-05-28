@@ -760,7 +760,7 @@ const TRENDING_DATA = [
 // ── Trending: 爆款牆 ──
 // Gist-based: 每個分類獨立 JSON，前端直接 fetch Gist
 var GIST_BASE = 'https://gist.githubusercontent.com/JHEN0907/bc4b43c508a17864bf8e1c4d1fef8531/raw';
-var trendingCache = { all: null, bazi: null, persona: null, other: null };
+var trendingCache = { all: null, bazi: null, tarot: null, mindful: null, persona: null, other: null };
 var currentPlatformFilter = 'all';
 
 function currentTrendingFilter() {
@@ -820,12 +820,14 @@ async function loadAllTrending(forceRefresh) {
     // 全部 = 合併三個分類
     await Promise.all([
       loadTrendingForCategory('bazi'),
+      loadTrendingForCategory('tarot'),
+      loadTrendingForCategory('mindful'),
       loadTrendingForCategory('persona'),
       loadTrendingForCategory('other'),
     ]);
     var merged = [];
     var seen = {};
-    ['bazi', 'persona', 'other'].forEach(function(c) {
+    ['bazi', 'tarot', 'mindful', 'persona', 'other'].forEach(function(c) {
       (trendingCache[c] || []).forEach(function(t) {
         var key = (t.text || '').substring(0, 50);
         if (!seen[key]) { seen[key] = true; merged.push(t); }
@@ -981,7 +983,7 @@ document.getElementById('refreshTrendingBtn')?.addEventListener('click', async f
   await new Promise(function(r) { setTimeout(r, 3000); });
 
   // 3. 清空快取，重新從 Gist 讀取
-  trendingCache = { all: null, bazi: null, persona: null, other: null };
+  trendingCache = { all: null, bazi: null, tarot: null, mindful: null, persona: null, other: null };
   await loadAllTrending(true);
 
   btn.disabled = false;

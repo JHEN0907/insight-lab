@@ -1649,6 +1649,24 @@ def get_other_trending():
     return jsonify({'items': [], 'error': '請先在本機執行 python3 scripts/trending_analyzer.py -c other'})
 
 
+@app.route('/api/tarot-trending', methods=['GET'])
+def get_tarot_trending():
+    """塔羅覺察爆文"""
+    data = _load_trending_json('tarot')
+    if data and data.get('items'):
+        return jsonify(data)
+    return jsonify({'items': [], 'error': '請先在本機執行 python3 scripts/trending_analyzer.py -c tarot'})
+
+
+@app.route('/api/mindful-trending', methods=['GET'])
+def get_mindful_trending():
+    """正念修行爆文"""
+    data = _load_trending_json('mindful')
+    if data and data.get('items'):
+        return jsonify(data)
+    return jsonify({'items': [], 'error': '請先在本機執行 python3 scripts/trending_analyzer.py -c mindful'})
+
+
 # ─── 爆款牆：伺服器端更新 ───
 
 import threading

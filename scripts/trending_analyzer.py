@@ -45,14 +45,18 @@ if os.path.exists(env_path):
 # ─── 搜尋關鍵字 ───
 
 KEYWORDS = {
-    'bazi': ['八字 十神', '八字 正官 偏官', '八字 食神 傷官', '八字 日主 格局', '八字 大運 流年'],
-    'persona': ['心理學 感情', '感情 覺察', '自我覺察 成長', '情緒 療癒'],
-    'all': ['八字 十神', '八字 日主', '塔羅 占卜', '心理學 感情', '感情 覺察'],
-    'other': ['threads 爆文 2026', '自媒體 爆款 threads', '萬讚 threads', 'threads 熱門 觀點'],
+    'bazi': ['八字 十神', '八字 命盤 感情', '八字 正官 七殺', '八字 食神 傷官', '八字 流年 運勢'],
+    'tarot': ['塔羅 覺察', '塔羅 感情', '塔羅 療癒', '塔羅 指引 成長'],
+    'mindful': ['正念 修行', '佛法 智慧', '靜心 覺察', '冥想 療癒', '修行 生活'],
+    'persona': ['心理學 依附關係', '感情 迴避型', '自我覺察 內在小孩', '情緒 界線 關係'],
+    'all': ['八字 十神', '八字 感情', '塔羅 覺察', '心理學 依附', '感情 療癒'],
+    'other': ['threads 萬讚', '爆紅 threads 分享', 'threads 破萬', '超多人分享 threads'],
 }
 
 EXCLUDE_TERMS = {
     'bazi': ['AI 算命', 'AI 八字', '免費算命', '星座', '紫微斗數', '紫微', '塔羅', '心理學', '心理測驗'],
+    'tarot': ['AI 算命', '免費占卜', '星座'],
+    'mindful': [],
     'all': ['AI 算命', 'AI 八字', '免費算命', '星座運勢', '紫微斗數'],
     'persona': [],
     'other': [],
@@ -130,13 +134,17 @@ def crawl_threads_posts(category='bazi', target_count=10):
     all_posts = []
     seen_urls = set()
 
+    # 「其他」分類要求更高互動量（找真正的爆文架構）
+    min_likes = 50 if category == 'other' else 0
+
     for kw in keywords:
         if len(all_posts) >= target_count:
             break
-        need = target_count - len(all_posts)
+        # 多爬一些，之後篩掉低互動的
+        fetch_count = min(target_count * 2, 15) if min_likes > 0 else min(target_count - len(all_posts) + 3, 10)
         print(f"  🔎 Playwright 搜尋「{kw}」...")
         try:
-            results = search_threads(kw, max_results=min(need + 3, 10))
+            results = search_threads(kw, max_results=fetch_count)
         except Exception as e:
             print(f"  ⚠️ 搜尋「{kw}」失敗: {e}")
             continue
@@ -147,6 +155,10 @@ def crawl_threads_posts(category='bazi', target_count=10):
                 continue
             text = p.get('text', '')
             if any(ex in text for ex in exclude):
+                continue
+            # 互動量篩選（驗證後的數據才準，這裡先用搜尋頁數據粗篩）
+            likes = p.get('likes', 0) or 0
+            if likes < min_likes:
                 continue
             seen_urls.add(url)
             all_posts.append({
@@ -294,7 +306,7 @@ def analyze_posts_with_ai(posts, category='bazi'):
     if not posts:
         return posts
 
-    cat_label = {'bazi': '四柱八字/十神', 'persona': '心理學/感情/覺察', 'all': '綜合', 'other': '跨領域爆款架構'}
+    cat_label = {'bazi': '四柱八字/十神', 'tarot': '塔羅覺察', 'mindful': '正念修行', 'persona': '心理學/感情/覺察', 'all': '綜合', 'other': '跨領域爆款架構'}
     label = cat_label.get(category, '綜合')
 
     posts_text = ""
@@ -303,7 +315,14 @@ def analyze_posts_with_ai(posts, category='bazi'):
 
     other_extra = ""
     if category == 'other':
-        other_extra = "\n⚠️ 「其他」分類重點：分析「爆文架構」—— 文章結構、開頭手法、轉折方式是否可套用到任何領域。\napply 欄位請具體說明：這個爆文架構怎麼套用到八字/塔羅/覺察主題？舉個具體例子。\n"
+        other_extra = """
+⚠️ 「其他」分類重點 — 爆文模板分析：
+- 這些是各領域的高互動爆文，重點是判斷「這篇的架構能不能換字就套用到八字/塔羅/覺察領域」
+- hook 欄位：拆解開頭手法的「公式」，例如「○○的人，其實都有一個共同點」→ 可替換成「夫妻宮有七殺的人，其實都有一個共同點」
+- apply 欄位：**必須寫出具體的套用範例**，直接把原文的架構換成八字/塔羅版本的示範句子
+  例如原文「30歲後才懂的5件事」→ 套用：「學八字後才懂的5件事」
+- 如果這篇的架構太特殊、無法替換成八字/塔羅主題，就在 apply 寫「不適合套用」
+"""
 
     prompt = f"""你是自媒體爆文分析專家。以下是從 Threads 爬到的{label}相關真實貼文。
 請為每篇貼文分析 hook（開頭手法）、why（爆文原因）、apply（套用建議）。
@@ -504,13 +523,13 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='爆款牆分析')
     parser.add_argument('--category', '-c', default='all',
-                        choices=['all', 'bazi', 'persona', 'other'])
+                        choices=['all', 'bazi', 'tarot', 'mindful', 'persona', 'other'])
     parser.add_argument('--all-categories', '-a', action='store_true')
     parser.add_argument('--mode', '-m', default='light', choices=['light', 'full'],
                         help='light=Playwright only / full=Playwright+Apify')
     args = parser.parse_args()
 
-    categories = ['all', 'bazi', 'persona', 'other'] if args.all_categories else [args.category]
+    categories = ['all', 'bazi', 'tarot', 'mindful', 'persona', 'other'] if args.all_categories else [args.category]
 
     for cat in categories:
         posts = search_trending(cat, mode=args.mode)
