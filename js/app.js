@@ -795,21 +795,32 @@ async function _fetchFromApi(category) {
   }
 }
 
+function _filterBadPosts(items) {
+  // 過濾被 AI 標記為不適合的貼文
+  var badKeywords = ['\u6c42\u6559\u6587', '\u4e0d\u9069\u5408\u53c3\u8003', '\u65b7\u8a00\u5f0f', '\u5b97\u6559\u795e\u79d8', '\u4e0d\u7b26\u5408\u54c1\u724c'];
+  return items.filter(function(t) {
+    var hook = (t.hook || '').toLowerCase();
+    return !badKeywords.some(function(kw) { return hook.indexOf(kw) >= 0; });
+  });
+}
+
 async function loadTrendingForCategory(cat) {
   // 1. 先試 Gist（雲端最新）
   var data = await _fetchGist(cat);
   if (data && data.items && data.items.length) {
-    data.items.forEach(function(t) { t._score = _trendingScore(t); });
-    data.items.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
-    trendingCache[cat] = data.items;
+    var filtered = _filterBadPosts(data.items);
+    filtered.forEach(function(t) { t._score = _trendingScore(t); });
+    filtered.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+    trendingCache[cat] = filtered;
     return;
   }
   // 2. 再試 API（本機 api_server）
   data = await _fetchFromApi(cat);
   if (data && data.items && data.items.length) {
-    data.items.forEach(function(t) { t._score = _trendingScore(t); });
-    data.items.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
-    trendingCache[cat] = data.items;
+    var filtered2 = _filterBadPosts(data.items);
+    filtered2.forEach(function(t) { t._score = _trendingScore(t); });
+    filtered2.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+    trendingCache[cat] = filtered2;
     return;
   }
 }
