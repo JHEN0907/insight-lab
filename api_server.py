@@ -1697,16 +1697,47 @@ def _run_trending_update(categories=None, mode='light'):
         _trending_running = False
 
 
+def _trigger_discord_bot():
+    """透過 Discord Webhook 通知本機 bot 跑 Claude CLI 分析"""
+    webhook_url = os.environ.get('DISCORD_WEBHOOK_URL', '')
+    if not webhook_url:
+        return
+    try:
+        payload = json.dumps({
+            'content': '🔥 網站觸發更新爆文',
+            'username': 'Insight Lab 網站',
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            webhook_url, data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        urllib.request.urlopen(req, timeout=5)
+        print("📨 已發送 Discord 通知，等待 bot 用 Claude CLI 分析", flush=True)
+    except Exception as e:
+        print(f"⚠️ Discord webhook 失敗: {e}", flush=True)
+
+
 @app.route('/api/trending/refresh', methods=['POST'])
 def refresh_trending():
-    """手動觸發爆款牆更新（背景執行）"""
+    """手動觸發爆款牆更新：
+    1. 發 Discord 訊息觸發本機 bot（Claude CLI 品質最好）
+    2. 同時 Zeabur 也用 Gemini 跑一份（備援）
+    電腦開著 → Claude CLI 結果會覆蓋 Gemini 結果
+    電腦關了 → 至少有 Gemini 備援"""
     if _trending_running:
         return jsonify({'status': 'already_running'}), 409
+
     category = (request.json or {}).get('category')
     cats = [category] if category else None
+
+    # ① 發 Discord 通知 → 本機 bot 用 Claude CLI 跑（如果電腦開著）
+    _trigger_discord_bot()
+
+    # ② 同時 Zeabur 也用 Gemini 跑（備援）
     thread = threading.Thread(target=_run_trending_update, args=(cats, 'light'), daemon=True)
     thread.start()
-    return jsonify({'status': 'started'})
+    return jsonify({'status': 'started', 'discord_triggered': True})
 
 
 @app.route('/api/trending/status', methods=['GET'])
