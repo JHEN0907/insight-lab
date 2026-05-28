@@ -172,85 +172,79 @@ C（CTA 結尾）：餘韻金句/自然問句/懸念式/行動呼籲
 
 
 CLAUDE_PATH = '/Users/Sherry/.local/bin/claude'
+GOOGLE_AI_API_KEY = os.environ.get('GOOGLE_AI_API_KEY', '')
 
 def run_claude(prompt, timeout=600):
-    """呼叫 Claude CLI 生成內容（有 WebSearch + 讀檔能力）
-    本機用 CLI，雲端 fallback 到 Anthropic API"""
-    # 優先用 Claude CLI（有搜尋能力）
+    """雙引擎：Claude CLI（本機優先）→ Gemini（雲端備援）
+    所有 20+ 個呼叫點不需要修改，函數簽名不變"""
+
+    # 1. 先試 Claude CLI（本機品質最好）
     if os.path.exists(CLAUDE_PATH):
         try:
             result = subprocess.run(
-                [
-                    CLAUDE_PATH, '-p',
-                    '--output-format', 'text',
-                    '--allowedTools', 'WebSearch,WebFetch,Read,Glob,Grep',
-                    '--', prompt
-                ],
-                capture_output=True, text=True,
-                cwd=PROJECT_ROOT,
+                [CLAUDE_PATH, '-p', '--output-format', 'text',
+                 '--allowedTools', 'WebSearch,WebFetch,Read,Glob,Grep',
+                 '--', prompt],
+                capture_output=True, text=True, cwd=PROJECT_ROOT,
                 timeout=timeout,
                 env={**os.environ, 'CLAUDE_CODE_ENTRYPOINT': 'cli'}
             )
             stdout = result.stdout.strip()
             if stdout:
-                # 檢查是否是 API 錯誤
-                if any(kw in stdout for kw in ['529', 'overloaded', 'API error', 'rate limit']):
-                    print(f"⚠️ Claude CLI API error: {stdout[:200]}", flush=True)
-                    return None
-                return stdout
+                if any(kw in stdout.lower() for kw in ['overloaded', 'api error', 'rate limit', 'session limit']):
+                    print(f"⚠️ Claude CLI issue: {stdout[:200]}", flush=True)
+                else:
+                    return stdout
             stderr = result.stderr.strip()
             if stderr and not stderr.startswith('Error') and len(stderr) > 50:
                 return stderr
-            print(f"⚠️ Claude CLI empty output, stderr: {stderr[:200]}", flush=True)
-            return None
         except subprocess.TimeoutExpired:
             print("⚠️ Claude CLI timeout", flush=True)
-            return None
         except Exception as e:
             print(f"⚠️ Claude CLI error: {e}", flush=True)
-            # fallthrough to Anthropic API
 
-    # Fallback: Anthropic API + Web Search（雲端部署用）
-    if not ANTHROPIC_API_KEY:
-        return None
-    try:
-        req_data = json.dumps({
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 16000,
-            "tools": [
-                {
-                    "type": "web_search_20250305",
-                    "name": "web_search",
-                    "max_uses": 5
+    # 2. Gemini fallback（雲端備援，免費）
+    api_key = GOOGLE_AI_API_KEY
+    if api_key:
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt + '\n\n⚠️ 所有文字必須使用繁體中文，不可出現任何簡體字。',
+            )
+            text = response.text.strip() if response.text else None
+            if text:
+                print("🟡 使用 Gemini 備援", flush=True)
+                return text
+        except Exception as e:
+            print(f"⚠️ Gemini error: {e}", flush=True)
+
+    # 3. Anthropic API fallback（如果有 key）
+    if ANTHROPIC_API_KEY:
+        try:
+            req_data = json.dumps({
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 16000,
+                "messages": [{"role": "user", "content": prompt}]
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=req_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'x-api-key': ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01',
                 }
-            ],
-            "messages": [{"role": "user", "content": prompt}]
-        }).encode('utf-8')
-        req = urllib.request.Request(
-            'https://api.anthropic.com/v1/messages',
-            data=req_data,
-            headers={
-                'Content-Type': 'application/json',
-                'x-api-key': ANTHROPIC_API_KEY,
-                'anthropic-version': '2023-06-01',
-            }
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            result = json.loads(resp.read().decode('utf-8'))
-            # 從 content blocks 中提取文字（跳過 tool_use / web_search 結果）
-            texts = []
-            for block in result.get('content', []):
-                if block.get('type') == 'text':
-                    texts.append(block.get('text', ''))
-            text = '\n'.join(texts).strip()
-            return text if text else None
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8')[:500] if e.fp else ''
-        print(f"Anthropic API HTTP error {e.code}: {body}", flush=True)
-        return None
-    except Exception as e:
-        print(f"Anthropic API error: {e}", flush=True)
-        return None
+            )
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
+                texts = [b.get('text', '') for b in result.get('content', []) if b.get('type') == 'text']
+                return '\n'.join(texts).strip() or None
+        except Exception as e:
+            print(f"⚠️ Anthropic API error: {e}", flush=True)
+
+    return None
 
 
 # ─── Static Files & Health ───
@@ -1646,6 +1640,63 @@ def get_persona_trending():
     return jsonify(data)
 
 
+@app.route('/api/other-trending', methods=['GET'])
+def get_other_trending():
+    """其他領域爆款架構"""
+    data = _load_trending_json('other')
+    if data and data.get('items'):
+        return jsonify(data)
+    return jsonify({'items': [], 'error': '請先在本機執行 python3 scripts/trending_analyzer.py -c other'})
+
+
+# ─── 爆款牆：伺服器端更新 ───
+
+import threading
+_trending_running = False
+
+def _run_trending_update(categories=None, mode='light'):
+    """在伺服器端執行爆款牆更新"""
+    global _trending_running
+    if _trending_running:
+        return {'status': 'already_running'}
+    _trending_running = True
+    try:
+        sys.path.insert(0, os.path.join(PROJECT_ROOT, 'scripts'))
+        from trending_analyzer import search_trending, save_to_file, save_to_gist
+        cats = categories or ['all', 'bazi', 'persona', 'other']
+        results = {}
+        for cat in cats:
+            posts = search_trending(cat, mode=mode)
+            if posts:
+                save_to_file(posts, cat)
+                save_to_gist(posts, cat)
+            results[cat] = len(posts)
+        return {'status': 'done', 'results': results}
+    except Exception as e:
+        print(f"⚠️ Trending update failed: {e}", flush=True)
+        return {'status': 'error', 'message': str(e)}
+    finally:
+        _trending_running = False
+
+
+@app.route('/api/trending/refresh', methods=['POST'])
+def refresh_trending():
+    """手動觸發爆款牆更新（背景執行）"""
+    if _trending_running:
+        return jsonify({'status': 'already_running'}), 409
+    category = (request.json or {}).get('category')
+    cats = [category] if category else None
+    thread = threading.Thread(target=_run_trending_update, args=(cats, 'light'), daemon=True)
+    thread.start()
+    return jsonify({'status': 'started'})
+
+
+@app.route('/api/trending/status', methods=['GET'])
+def trending_status():
+    """檢查爆款牆更新狀態"""
+    return jsonify({'running': _trending_running})
+
+
 # ─── 原稿處理 API ───
 
 @app.route('/api/rewrite-original', methods=['POST'])
@@ -1833,10 +1884,40 @@ def style_learning():
         return jsonify({'raw': result})
 
 
+def _init_scheduler():
+    """APScheduler: 每日兩次自動更新爆款牆"""
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler()
+        # 08:00 台灣 = 00:00 UTC（完整更新：Playwright + Apify）
+        scheduler.add_job(
+            _run_trending_update,
+            'cron', hour=0, minute=0,
+            args=(None, 'full'),
+            id='trending_morning',
+            misfire_grace_time=3600,
+        )
+        # 18:00 台灣 = 10:00 UTC（輕量更新：Playwright only）
+        scheduler.add_job(
+            _run_trending_update,
+            'cron', hour=10, minute=0,
+            args=(None, 'light'),
+            id='trending_evening',
+            misfire_grace_time=3600,
+        )
+        scheduler.start()
+        print("⏰ Scheduler: 08:00(full) + 18:00(light) 台灣時間", flush=True)
+    except ImportError:
+        print("⚠️ apscheduler 未安裝，跳過排程", flush=True)
+
+
 if __name__ == '__main__':
     print("🚀 Insight Lab API Server starting...")
     print(f"📁 Project root: {PROJECT_ROOT}")
     print(f"🔗 Notion: {'connected' if NOTION_TOKEN else 'NOT SET'}")
+    print(f"🟢 Claude CLI: {'available' if os.path.exists(CLAUDE_PATH) else 'NOT FOUND (will use Gemini)'}")
+    print(f"🟡 Gemini: {'available' if GOOGLE_AI_API_KEY else 'NOT SET'}")
+    _init_scheduler()
     port = int(os.environ.get('PORT', 8080))
-    print(f"🚀 Starting on port {port}, API key: {'set' if ANTHROPIC_API_KEY else 'NOT SET'}", flush=True)
+    print(f"🚀 Starting on port {port}", flush=True)
     app.run(host='0.0.0.0', port=port, debug=False)

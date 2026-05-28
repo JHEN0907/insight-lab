@@ -758,7 +758,9 @@ const TRENDING_DATA = [
 ];
 
 // ── Trending: 爆款牆 ──
-var trendingPool = []; // 所有搜到的爆文（合併，不會因切換 tab 消失）
+// Gist-based: 每個分類獨立 JSON，前端直接 fetch Gist
+var GIST_BASE = 'https://gist.githubusercontent.com/JHEN0907/bc4b43c508a17864bf8e1c4d1fef8531/raw';
+var trendingCache = { all: null, bazi: null, persona: null, other: null };
 var currentPlatformFilter = 'all';
 
 function currentTrendingFilter() {
@@ -770,48 +772,80 @@ function _trendingScore(t) {
   return (t.likes || 0) + (t.comments || 0) * 3 + (t.reposts || 0) * 5;
 }
 
-function _addToPool(items) {
-  var seen = {};
-  trendingPool.forEach(function(t) { seen[(t.text || '').substring(0, 50)] = true; });
-  items.forEach(function(t) {
-    var key = (t.text || '').substring(0, 50);
-    if (!seen[key]) {
-      t._score = _trendingScore(t);
-      trendingPool.push(t);
-      seen[key] = true;
-    }
-  });
-  trendingPool.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+async function _fetchGist(category) {
+  var url = GIST_BASE + '/trending_' + category + '.json?t=' + Date.now();
+  try {
+    var resp = await fetch(url);
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    return data;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function _fetchFromApi(category) {
+  var endpoint = category === 'all' ? '/api/trending' :
+                 '/api/' + category + '-trending';
+  try {
+    var result = await apiCall(endpoint);
+    return result;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function loadTrendingForCategory(cat) {
+  // 1. 先試 Gist（雲端最新）
+  var data = await _fetchGist(cat);
+  if (data && data.items && data.items.length) {
+    data.items.forEach(function(t) { t._score = _trendingScore(t); });
+    data.items.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+    trendingCache[cat] = data.items;
+    return;
+  }
+  // 2. 再試 API（本機 api_server）
+  data = await _fetchFromApi(cat);
+  if (data && data.items && data.items.length) {
+    data.items.forEach(function(t) { t._score = _trendingScore(t); });
+    data.items.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+    trendingCache[cat] = data.items;
+    return;
+  }
 }
 
 async function loadAllTrending(forceRefresh) {
   var cat = currentTrendingFilter();
-  // 根據分類搜尋對應 API
-  var endpoints = [];
-  if (cat === 'bazi') endpoints = ['/api/bazi-trending?refresh=1'];
-  else if (cat === 'persona') endpoints = ['/api/persona-trending?refresh=1'];
-  else if (cat === 'cross') endpoints = ['/api/trending?refresh=1'];
-  else endpoints = ['/api/bazi-trending?refresh=1', '/api/persona-trending?refresh=1', '/api/trending?refresh=1'];
-
-  for (var i = 0; i < endpoints.length; i++) {
-    try {
-      var result = await apiCall(endpoints[i]);
-      if (result && result.items) _addToPool(result.items);
-    } catch(e) {}
+  if (cat === 'all') {
+    // 全部 = 合併三個分類
+    await Promise.all([
+      loadTrendingForCategory('bazi'),
+      loadTrendingForCategory('persona'),
+      loadTrendingForCategory('other'),
+    ]);
+    var merged = [];
+    var seen = {};
+    ['bazi', 'persona', 'other'].forEach(function(c) {
+      (trendingCache[c] || []).forEach(function(t) {
+        var key = (t.text || '').substring(0, 50);
+        if (!seen[key]) { seen[key] = true; merged.push(t); }
+      });
+    });
+    merged.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+    trendingCache.all = merged;
+  } else {
+    await loadTrendingForCategory(cat);
   }
   renderTrending();
 }
 
 function renderTrending() {
   var list = document.getElementById('trendingList');
-  var data = trendingPool.length ? trendingPool : TRENDING_DATA;
   var catFilter = currentTrendingFilter();
+  var data = trendingCache[catFilter] || [];
 
-  // 領域篩選
+  // 平台篩選
   var filtered = data;
-  if (catFilter === 'bazi') filtered = data.filter(function(t) { return t.cat === 'my' || (t.sub && t.sub.match(/shishen|love|fate/)); });
-  else if (catFilter === 'persona') filtered = data.filter(function(t) { return t.cat === 'cross' && (t.sub && t.sub.match(/psychology|love|growth/)) || (t.domain && t.domain.match(/\u5fc3\u7406|\u611f\u60c5|\u89ba\u5bdf/)); });
-  else if (catFilter === 'cross') filtered = data.filter(function(t) { return t.cat === 'cross'; });
   if (currentPlatformFilter !== 'all') {
     filtered = data.filter(function(t) {
       var p = (t.platform || '').toLowerCase();
@@ -823,11 +857,11 @@ function renderTrending() {
   }
 
   if (!filtered.length) {
-    list.innerHTML = '<div class="info-box"><p>\u9ede\u300c\ud83d\udd04 \u641c\u5c0b\u6700\u65b0\u300d\u8f09\u5165\u7206\u6587</p></div>';
+    var msg = trendingCache[catFilter] === null ? '\u8f09\u5165\u4e2d...' : '\u9019\u500b\u5206\u985e\u66ab\u7121\u8cc7\u6599\uff0c\u8acb\u9ede\u300c\ud83d\udd04 \u66f4\u65b0\u7206\u6587\u300d';
+    list.innerHTML = '<div class="info-box"><p>' + msg + '</p></div>';
     return;
   }
 
-  filtered.forEach(function(t) { if (!t._score) t._score = _trendingScore(t); });
   var mega = filtered.filter(function(t) { return t._score >= 5000; });
   var hot = filtered.filter(function(t) { return t._score >= 1000 && t._score < 5000; });
   var warm = filtered.filter(function(t) { return t._score >= 100 && t._score < 1000; });
@@ -875,6 +909,7 @@ function renderCard(t) {
     + '<div class="trending-actions">'
     + '<button class="btn btn-outline btn-sm" onclick="useAsTemplate(\'' + (apply || text).replace(/'/g, "\\'").replace(/\n/g, ' ').substring(0, 80) + '\')">\u2192 \u5957\u7528\u9019\u500b\u5f62\u5f0f</button>'
     + (hook ? '<button class="btn btn-outline btn-sm" onclick="useAsTemplate(\'' + hook.replace(/'/g, "\\'").substring(0, 60) + '\')">\u2192 \u5957\u7528 Hook</button>' : '')
+    + '<button class="btn btn-outline btn-sm trending-save-btn" onclick="saveTrendingCard(this)" data-card=\'' + JSON.stringify({author:t.author||'',text:(t.text||'').substring(0,200),hook:hook,why:why,apply:apply,url:url,platform:t.platform||'',likes:t.likes||0,date:t.date||''}).replace(/'/g,'&#39;') + '\'>\u2b50 \u6536\u85cf</button>'
     + '</div></div>';
 }
 
@@ -883,13 +918,40 @@ function useAsTemplate(text) {
   document.getElementById('copywriterInput').value = text;
 }
 
-// 領域 Tab 切換（不重新搜尋，只切換顯示快取）
-// 領域 tab 切換（純前端篩選，不清空資料）
+function saveTrendingCard(btn) {
+  try {
+    var card = JSON.parse(btn.dataset.card);
+    var saved = JSON.parse(localStorage.getItem('savedTrending') || '[]');
+    // 檢查是否已收藏
+    var exists = saved.some(function(s) { return s.url === card.url && s.text === card.text; });
+    if (exists) {
+      btn.innerHTML = '\u2705 \u5df2\u6536\u85cf';
+      return;
+    }
+    card.savedAt = new Date().toISOString();
+    saved.unshift(card);
+    // 最多存 50 筆
+    if (saved.length > 50) saved = saved.slice(0, 50);
+    localStorage.setItem('savedTrending', JSON.stringify(saved));
+    btn.innerHTML = '\u2705 \u5df2\u6536\u85cf';
+    btn.classList.add('saved');
+  } catch(e) {
+    btn.innerHTML = '\u274c \u5931\u6557';
+  }
+}
+
+// 領域 Tab 切換（有快取直接顯示，無快取 fetch Gist）
 document.querySelectorAll('.trending-tab').forEach(function(tab) {
-  tab.addEventListener('click', function() {
+  tab.addEventListener('click', async function() {
     document.querySelectorAll('.trending-tab').forEach(function(t) { t.classList.remove('active'); });
     tab.classList.add('active');
-    renderTrending();
+    var cat = tab.dataset.tfilter;
+    if (trendingCache[cat] && trendingCache[cat].length) {
+      renderTrending();
+    } else {
+      document.getElementById('trendingList').innerHTML = '<div class="info-box"><p>\u8f09\u5165\u4e2d...</p></div>';
+      await loadAllTrending(false);
+    }
   });
 });
 
@@ -903,19 +965,30 @@ document.querySelectorAll('.platform-tab').forEach(function(tab) {
   });
 });
 
-// 重新載入（從伺服器讀取最新資料）
+// 更新爆文（觸發伺服器爬文+分析+上傳 Gist，然後重新 fetch）
 document.getElementById('refreshTrendingBtn')?.addEventListener('click', async function() {
   var btn = this;
   btn.disabled = true;
-  btn.innerHTML = '\u23f3 \u8f09\u5165\u4e2d...';
-  trendingPool = [];
+  btn.innerHTML = '\u23f3 \u66f4\u65b0\u4e2d...';
+
+  // 1. 觸發伺服器端更新
+  try {
+    await apiCall('/api/trending/refresh', { method: 'POST', body: JSON.stringify({}) });
+  } catch(e) {}
+
+  // 2. 等幾秒讓伺服器跑完（或直接重新 fetch Gist）
+  btn.innerHTML = '\u23f3 \u8b80\u53d6\u6700\u65b0\u8cc7\u6599...';
+  await new Promise(function(r) { setTimeout(r, 3000); });
+
+  // 3. 清空快取，重新從 Gist 讀取
+  trendingCache = { all: null, bazi: null, persona: null, other: null };
   await loadAllTrending(true);
+
   btn.disabled = false;
-  if (trendingPool.length) {
-    btn.innerHTML = '\ud83d\udd04 \u91cd\u65b0\u8f09\u5165';
-  } else {
-    btn.innerHTML = '\u26a0\ufe0f \u8acb\u5148\u5728\u672c\u6a5f\u57f7\u884c\u5206\u6790';
-  }
+  var cat = currentTrendingFilter();
+  btn.innerHTML = (trendingCache[cat] && trendingCache[cat].length)
+    ? '\ud83d\udd04 \u66f4\u65b0\u7206\u6587'
+    : '\ud83d\udd04 \u66f4\u65b0\u7206\u6587';
 });
 
 loadAllTrending(false);
