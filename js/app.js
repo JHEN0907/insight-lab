@@ -759,7 +759,7 @@ const TRENDING_DATA = [
 
 // ── Trending: 爆款牆 ──
 // Gist-based: 每個分類獨立 JSON，前端直接 fetch Gist
-var GIST_BASE = 'https://gist.githubusercontent.com/JHEN0907/bc4b43c508a17864bf8e1c4d1fef8531/raw';
+var GIST_BASE = 'https://gist.githubusercontent.com/JHEN0907/1d5953637739f53475702dbc24551d79/raw';
 var trendingCache = { all: null, bazi: null, tarot: null, mindful: null, persona: null, other: null };
 var currentPlatformFilter = 'all';
 
