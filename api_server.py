@@ -187,7 +187,6 @@ def run_claude(prompt, timeout=600):
                  '--', prompt],
                 capture_output=True, text=True, cwd=PROJECT_ROOT,
                 timeout=timeout,
-                env={**os.environ, 'CLAUDE_CODE_ENTRYPOINT': 'cli'}
             )
             stdout = result.stdout.strip()
             if stdout:
