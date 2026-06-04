@@ -191,7 +191,7 @@ def run_claude(prompt, timeout=600):
             )
             stdout = result.stdout.strip()
             if stdout:
-                if any(kw in stdout.lower() for kw in ['overloaded', 'api error', 'rate limit', 'session limit']):
+                if any(kw in stdout.lower() for kw in ['overloaded', 'api error', 'rate limit', 'session limit', 'credit balance', 'too low', 'billing']):
                     print(f"⚠️ Claude CLI issue: {stdout[:200]}", flush=True)
                 else:
                     return stdout
