@@ -2317,11 +2317,12 @@ function renderCopyResult(copy, techniques, hookType, pillar, format, resultsEl,
   });
 
   // 快速修改按鈕
+  var FORMAT_RULE = '⚠️ 格式規則：保留所有換行和空行、每句獨立一行不超過25字、emoji整篇最多2個、不要合併短句成長句。';
   var QUICK_FIX_PROMPTS = {
-    'rewrite-opening': '請只修改這篇文案的「開頭前 2-3 行」，換一個更有衝擊力的 Hook。保持其他部分不變。用現場感、具體場景或反問句替換。',
-    'rewrite-ending': '請只修改這篇文案的「結尾最後 2-3 行」，換一個更有餘韻的收尾。保持其他部分不變。用金句、反思問句或懸念替換。',
-    'add-details': '請在這篇文案中加入更多具體細節（人名、地點、時間、數字、個人經驗），讓文案更有真實感。盡量保持原結構。',
-    'compress': '請壓縮這篇文案，刪除冗字冗句（通常/可能/應該/或許），讓每句更精簡有力。保留核心觀點和所有細節。',
+    'rewrite-opening': '請只修改這篇文案的「開頭前 2-3 行」，換一個更有衝擊力的 Hook。保持其他部分不變。用現場感、具體場景或反問句替換。' + FORMAT_RULE,
+    'rewrite-ending': '請只修改這篇文案的「結尾最後 2-3 行」，換一個更有餘韻的收尾。保持其他部分不變。用金句、反思問句或懸念替換。' + FORMAT_RULE,
+    'add-details': '請在這篇文案中加入更多具體細節（人名、地點、時間、數字、個人經驗），讓文案更有真實感。盡量保持原結構。' + FORMAT_RULE,
+    'compress': '請壓縮這篇文案，刪除冗字冗句（通常/可能/應該/或許），讓每句更精簡有力。保留核心觀點和所有細節。' + FORMAT_RULE,
   };
   resultsEl.querySelectorAll('.quick-fix-btn').forEach(function(btn) {
     btn.addEventListener('click', async function() {
