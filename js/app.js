@@ -74,6 +74,11 @@ function switchPage(pageId) {
 
   // Update URL hash
   window.location.hash = pageId;
+
+  // Lazy-load pages
+  if (pageId === 'templates' && typeof loadTemplatePage === 'function') loadTemplatePage();
+  if (pageId === 'collection' && typeof renderCollectionPage === 'function') renderCollectionPage();
+  if (pageId === 'notion-collection' && typeof renderNotionCollectionPage === 'function') renderNotionCollectionPage();
 }
 
 // Sidebar click
@@ -222,6 +227,16 @@ viralInput.addEventListener('keydown', (e) => {
   }
 });
 
+// ── Viral Analyzer: Pillar Selector ──
+var currentViralPillar = '八字';
+document.querySelectorAll('#viralPillarSelector .pill').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#viralPillarSelector .pill').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentViralPillar = btn.dataset.pillar;
+  });
+});
+
 analyzeBtn.addEventListener('click', async () => {
   const input = viralInput.value.trim();
   const hasImages = attachedFiles.length > 0;
@@ -253,10 +268,29 @@ analyzeBtn.addEventListener('click', async () => {
   loadingText.textContent = LOADING_STEPS[0].text;
   loadingBar.style.width = LOADING_STEPS[0].progress + '%';
 
+  // Collect image data — convert File objects to base64
+  var imageData = [];
+  if (hasImages) {
+    imageData = await Promise.all(attachedFiles.map(function(file) {
+      return new Promise(function(resolve) {
+        if (typeof file === 'string') { resolve(file); return; }
+        if (file.data) { resolve(file.data); return; }
+        var reader = new FileReader();
+        reader.onload = function(ev) { resolve(ev.target.result); };
+        reader.onerror = function() { resolve(''); };
+        reader.readAsDataURL(file);
+      });
+    }));
+  }
+
   // Try real API first
   let result = null;
   try {
-    result = await apiCall('/api/analyze-viral', { text: input, images: [] });
+    result = await apiCall('/api/analyze-viral', {
+      text: input,
+      images: imageData,
+      pillar: currentViralPillar
+    });
   } catch (e) {
     console.log('API error, using mock:', e.message);
   }
@@ -271,7 +305,6 @@ analyzeBtn.addEventListener('click', async () => {
       await sleep(400);
     }
     result = generateMockAnalysis(input);
-    // Convert mock format
     result = {
       total_posts: result.totalPosts,
       analyses: result.analyses.map(a => ({
@@ -283,6 +316,9 @@ analyzeBtn.addEventListener('click', async () => {
         likes: a.likes, comments: a.comments,
         reposts: a.reposts, shares: a.shares,
         templates: a.templates,
+        matched_template_id: '', matched_template_name: '',
+        sample_post: '', sample_pillar: currentViralPillar,
+        fact_checks: [],
       })),
     };
   }
@@ -292,9 +328,10 @@ analyzeBtn.addEventListener('click', async () => {
   await sleep(300);
   loadingState.classList.add('hidden');
 
-  // Normalize field names (API uses snake_case)
+  // Normalize field names
   const analyses = (result.analyses || []).map(a => ({
     author: a.author || '分析結果',
+    originalText: a.original_text || '',
     hookType: a.hook_type || a.hookType || '—',
     hookFormula: a.hook_formula || a.hookFormula || '—',
     similarHooks: a.similar_hooks || a.similarHooks || [],
@@ -302,6 +339,11 @@ analyzeBtn.addEventListener('click', async () => {
     likes: a.likes || '—', comments: a.comments || '—',
     reposts: a.reposts || '—', shares: a.shares || '—',
     templates: a.templates || [],
+    matchedTemplateId: a.matched_template_id || '',
+    matchedTemplateName: a.matched_template_name || '',
+    samplePost: a.sample_post || '',
+    samplePillar: a.sample_pillar || currentViralPillar,
+    factChecks: a.fact_checks || [],
     rawText: a.raw_text || '',
   }));
 
@@ -320,29 +362,70 @@ analyzeBtn.addEventListener('click', async () => {
 });
 
 function renderResults(analyses) {
-  resultsArea.innerHTML = analyses.map((a, i) => `
-    <div class="result-card${i === 0 ? ' open' : ''}">
+  resultsArea.innerHTML = analyses.map((a, i) => {
+    var fcHtml = '';
+    if (a.factChecks && a.factChecks.length > 0) {
+      fcHtml = a.factChecks.map(function(fc) {
+        return '<div class="fc-item"><span class="fc-status">' + (fc.status || '—') + '</span> <strong>' + (fc.content || '') + '</strong><br><span class="fc-note">' + (fc.note || '') + '</span></div>';
+      }).join('');
+    }
+
+    var sampleHtml = '';
+    if (a.samplePost) {
+      var escapedPost = a.samplePost.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      sampleHtml = `
+        <div class="result-section sample-section">
+          <div class="result-section-title">
+            ${a.matchedTemplateName ? '<span class="template-badge">' + a.matchedTemplateName + '</span>' : ''}
+            套用範文（${a.samplePillar}）
+          </div>
+          <div class="sample-post-container">
+            <pre class="sample-post-text" id="samplePost${i}">${escapedPost}</pre>
+            <div class="sample-actions">
+              <button class="btn btn-sm btn-outline" onclick="handleSampleAction(${i}, 'suggest')">
+                <span>💡</span> 給建議調整
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="handleSampleAction(${i}, 'edit')">
+                <span>✏️</span> 編輯文案
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="handleSampleAction(${i}, 'rewrite')">
+                <span>🔄</span> 重新生成
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="handleSampleAction(${i}, 'factcheck')">
+                <span>🔍</span> 事實查核
+              </button>
+              <button class="btn btn-sm btn-primary" onclick="handleSampleAction(${i}, 'copy')">
+                <span>📋</span> 複製文案
+              </button>
+            </div>
+            <div class="save-notion-row">
+              <button class="save-notion-btn" id="saveBtn${i}" onclick="saveAnalysisToNotion(${i})">⭐ 收藏到 Notion</button>
+              <span class="save-status" id="saveStatus${i}"></span>
+            </div>
+            <div class="sample-feedback hidden" id="sampleFeedback${i}"></div>
+          </div>
+        </div>`;
+    }
+
+    return `
+    <div class="result-card${i === 0 ? ' open' : ''}" data-index="${i}">
       <div class="result-card-header" onclick="this.parentElement.classList.toggle('open')">
         <span class="result-card-num">${i + 1}</span>
         <span class="result-card-title">${a.author}</span>
+        ${a.matchedTemplateName ? '<span class="template-tag">' + a.matchedTemplateName + '</span>' : ''}
         <span class="result-card-toggle">▼</span>
       </div>
       <div class="result-card-body">
-        ${a.url ? `<div class="result-section">
-          <div class="result-section-title">原文文章連結</div>
-          <div class="result-content"><a href="${a.url}" target="_blank">${a.url}</a></div>
-        </div>` : ''}
-
         <div class="result-section">
           <div class="result-section-title">HOOK 開頭公式拆解</div>
           <div class="result-content">
             <ol>
-              <li><strong>這是什麼樣的開頭：</strong>${a.hookType}</li>
-              <li><strong>開頭公式拆解：</strong>${a.hookFormula}</li>
-              <li><strong>舉幾個類似的句子：</strong>
-                <ul>${a.similarHooks.map(h => `<li>${h}</li>`).join('')}</ul>
+              <li><strong>開頭類型：</strong>${a.hookType}</li>
+              <li><strong>公式拆解：</strong>${a.hookFormula}</li>
+              <li><strong>類似句子（你的領域改寫）：</strong>
+                <ul>${a.similarHooks.map(h => '<li>' + h + '</li>').join('')}</ul>
               </li>
-              <li><strong>一句話解釋為什麼會紅：</strong>${a.whyViral}</li>
+              <li><strong>為什麼會紅：</strong>${a.whyViral}</li>
             </ol>
           </div>
         </div>
@@ -350,34 +433,181 @@ function renderResults(analyses) {
         <div class="result-section">
           <div class="result-section-title">互動數據</div>
           <div class="result-engagement">
-            <span>❤️ ${a.likes || '未提供'}</span>
-            <span>💬 ${a.comments || '未提供'}</span>
-            <span>🔄 ${a.reposts || '未提供'}</span>
-            <span>📤 ${a.shares || '未提供'}</span>
+            <span>❤️ ${a.likes || '—'}</span>
+            <span>💬 ${a.comments || '—'}</span>
+            <span>🔄 ${a.reposts || '—'}</span>
+            <span>📤 ${a.shares || '—'}</span>
           </div>
         </div>
 
         <div class="result-section">
           <div class="result-section-title">可直接套用格式</div>
           <div class="result-content">
-            <ol>${a.templates.map(t => `<li>${t}</li>`).join('')}</ol>
+            <ol>${a.templates.map(t => '<li>' + t + '</li>').join('')}</ol>
           </div>
         </div>
+
+        ${sampleHtml}
+
+        ${fcHtml ? '<div class="result-section"><div class="result-section-title">🔍 事實查核</div><div class="fact-check-list">' + fcHtml + '</div></div>' : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  // Store analyses globally for action handlers
+  window._viralAnalyses = analyses;
+}
+
+// ── Sample Post Action Handlers ──
+var _actionLoading = {};
+
+async function handleSampleAction(index, action) {
+  var analyses = window._viralAnalyses || [];
+  var a = analyses[index];
+  if (!a) return;
+
+  var feedbackEl = document.getElementById('sampleFeedback' + index);
+  var postEl = document.getElementById('samplePost' + index);
+  if (!feedbackEl || !postEl) return;
+
+  if (action === 'copy') {
+    var text = a.samplePost || postEl.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      feedbackEl.classList.remove('hidden');
+      feedbackEl.innerHTML = '<div class="feedback-success">✅ 已複製到剪貼簿</div>';
+      setTimeout(function() { feedbackEl.classList.add('hidden'); }, 2000);
+    } catch(e) {
+      feedbackEl.classList.remove('hidden');
+      feedbackEl.innerHTML = '<div class="feedback-error">複製失敗，請手動選取</div>';
+    }
+    return;
+  }
+
+  if (action === 'edit') {
+    if (postEl.contentEditable === 'true') {
+      postEl.contentEditable = 'false';
+      postEl.classList.remove('editing');
+      var editedText = postEl.textContent;
+      feedbackEl.classList.remove('hidden');
+      feedbackEl.innerHTML = '<div class="feedback-actions"><button class="btn btn-sm btn-primary" onclick="submitEdit(' + index + ')">送出修改（AI 潤稿+查核）</button><button class="btn btn-sm btn-outline" onclick="cancelEdit(' + index + ')">取消</button></div>';
+      a._editedText = editedText;
+    } else {
+      postEl.contentEditable = 'true';
+      postEl.classList.add('editing');
+      postEl.focus();
+      feedbackEl.classList.remove('hidden');
+      feedbackEl.innerHTML = '<div class="feedback-hint">✏️ 直接在上方編輯文案，完成後再次點擊「編輯文案」</div>';
+    }
+    return;
+  }
+
+  if (_actionLoading[index]) return;
+  _actionLoading[index] = true;
+
+  feedbackEl.classList.remove('hidden');
+  feedbackEl.innerHTML = '<div class="feedback-loading">⏳ 處理中...</div>';
+
+  try {
+    if (action === 'suggest') {
+      var res = await apiCall('/api/template-adjust', {
+        post: a.samplePost, action: 'suggest', pillar: a.samplePillar
+      });
+      if (res && res.suggestions) {
+        var html = '<div class="suggestions-list"><h4>💡 調整建議</h4>';
+        res.suggestions.forEach(function(s) {
+          html += '<div class="suggestion-item"><strong>' + s.point + '</strong>';
+          if (s.before) html += '<div class="sg-before">修改前：' + s.before + '</div>';
+          if (s.after) html += '<div class="sg-after">修改後：' + s.after + '</div>';
+          if (s.reason) html += '<div class="sg-reason">' + s.reason + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+        feedbackEl.innerHTML = html;
+      } else {
+        feedbackEl.innerHTML = '<div class="feedback-error">無法取得建議</div>';
+      }
+    } else if (action === 'rewrite') {
+      var res = await apiCall('/api/template-adjust', {
+        post: a.samplePost, action: 'rewrite', pillar: a.samplePillar
+      });
+      if (res && res.rewritten_post) {
+        a.samplePost = res.rewritten_post;
+        postEl.textContent = res.rewritten_post;
+        feedbackEl.innerHTML = '<div class="feedback-success">✅ 已重新生成</div>';
+        setTimeout(function() { feedbackEl.classList.add('hidden'); }, 2000);
+      } else {
+        feedbackEl.innerHTML = '<div class="feedback-error">重新生成失敗</div>';
+      }
+    } else if (action === 'factcheck') {
+      var res = await apiCall('/api/fact-check', {
+        post: postEl.textContent, pillar: a.samplePillar
+      });
+      if (res && res.fact_checks) {
+        var html = '<div class="fact-check-result"><h4>🔍 事實查核結果</h4>';
+        if (res.overall) html += '<div class="fc-overall">' + res.overall + '</div>';
+        res.fact_checks.forEach(function(fc) {
+          html += '<div class="fc-item"><span class="fc-status">' + fc.status + '</span> <strong>' + fc.content + '</strong><br><span class="fc-note">' + fc.note + '</span>';
+          if (fc.source) html += '<br><span class="fc-source">📎 ' + fc.source + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+        feedbackEl.innerHTML = html;
+      } else {
+        feedbackEl.innerHTML = '<div class="feedback-error">查核失敗</div>';
+      }
+    }
+  } catch(e) {
+    feedbackEl.innerHTML = '<div class="feedback-error">操作失敗：' + e.message + '</div>';
+  }
+  _actionLoading[index] = false;
+}
+
+async function submitEdit(index) {
+  var analyses = window._viralAnalyses || [];
+  var a = analyses[index];
+  if (!a || !a._editedText) return;
+  var feedbackEl = document.getElementById('sampleFeedback' + index);
+  var postEl = document.getElementById('samplePost' + index);
+  feedbackEl.innerHTML = '<div class="feedback-loading">⏳ AI 潤稿+查核中...</div>';
+  try {
+    var res = await apiCall('/api/template-adjust', {
+      post: a.samplePost, action: 'apply_edit', pillar: a.samplePillar, user_edit: a._editedText
+    });
+    if (res && res.polished_post) {
+      a.samplePost = res.polished_post;
+      postEl.textContent = res.polished_post;
+      var html = '<div class="feedback-success">✅ 已潤稿完成</div>';
+      if (res.fact_checks && res.fact_checks.length > 0) {
+        html += '<div class="fact-check-result"><h4>🔍 查核結果</h4>';
+        res.fact_checks.forEach(function(fc) {
+          html += '<div class="fc-item"><span class="fc-status">' + fc.status + '</span> <strong>' + fc.content + '</strong><br><span class="fc-note">' + fc.note + '</span></div>';
+        });
+        html += '</div>';
+      }
+      feedbackEl.innerHTML = html;
+    }
+  } catch(e) {
+    feedbackEl.innerHTML = '<div class="feedback-error">潤稿失敗：' + e.message + '</div>';
+  }
+}
+
+function cancelEdit(index) {
+  var feedbackEl = document.getElementById('sampleFeedback' + index);
+  var postEl = document.getElementById('samplePost' + index);
+  var analyses = window._viralAnalyses || [];
+  var a = analyses[index];
+  if (a) postEl.textContent = a.samplePost;
+  feedbackEl.classList.add('hidden');
 }
 
 function generateMockAnalysis(input) {
-  // Parse rough post count from input
-  const lines = input.split('\n').filter(l => l.trim());
-  const postCount = Math.max(1, Math.floor(lines.length / 3));
-
+  var lines = input.split('\n').filter(l => l.trim());
+  var postCount = Math.max(1, Math.floor(lines.length / 3));
   return {
     totalPosts: postCount,
     analyses: [{
       author: '示範帖文分析',
-      url: '',
       hookType: '情境代入型 + 痛點呼喚型',
       hookFormula: '描述讀者日常場景的痛點 + 帶出專業身份的衝突感',
       similarHooks: [
@@ -385,18 +615,13 @@ function generateMockAnalysis(input) {
         '每次吵完架，你是不是那個先道歉的人？',
         '為什麼你的感情總是走到同一個死胡同？',
       ],
-      whyViral: '用日常感情場景讓 25-38 歲女性瞬間對號入座，產生「這不就是我嗎」的強烈共鳴',
-      likes: '—',
-      comments: '—',
-      reposts: '—',
-      shares: '—',
+      whyViral: '用日常感情場景讓 25-38 歲女性瞬間對號入座',
+      likes: '—', comments: '—', reposts: '—', shares: '—',
       templates: [
         '[用你的領域開頭：描述一個具體的感情/人際場景]',
         '[點出痛點：「不是不愛，是...」的翻轉句]',
         '[帶入專業概念（八字/十神/牌卡），自然不生硬]',
-        '[具體可執行的建議 1]',
-        '[具體可執行的建議 2]',
-        '[具體可執行的建議 3]',
+        '[具體可執行的建議]',
         '[餘韻結尾：引發反思的一句話]',
       ],
     }],
@@ -405,6 +630,428 @@ function generateMockAnalysis(input) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+// ── URL Detection: Auto-crawl Threads URLs ──
+
+const THREADS_URL_REGEX = /https?:\/\/(www\.)?threads\.net\/@[^\s]+/i;
+
+function detectThreadsUrl(text) {
+  var match = text.match(THREADS_URL_REGEX);
+  return match ? match[0] : null;
+}
+
+// Inject URL detection into analyzeBtn click — patch the existing handler
+(function patchAnalyzeForUrlCrawl() {
+  var origClick = analyzeBtn.onclick;
+  var origListeners = analyzeBtn._patchedUrlCrawl;
+  if (origListeners) return;
+  analyzeBtn._patchedUrlCrawl = true;
+
+  var origHandler = null;
+  analyzeBtn.addEventListener('click', async function urlCrawlIntercept(e) {
+    var input = viralInput.value.trim();
+    var threadsUrl = detectThreadsUrl(input);
+    if (!threadsUrl) return; // let original handler proceed
+
+    // If entire input is just a URL, crawl it first
+    if (input.replace(threadsUrl, '').trim().length < 10) {
+      e.stopImmediatePropagation();
+      loadingState.classList.remove('hidden');
+      loadingText.textContent = '正在爬取 Threads 貼文...';
+      loadingBar.style.width = '20%';
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '<span class="btn-icon">⏳</span><span>爬取中...</span>';
+
+      try {
+        var crawlResult = await apiCall('/api/crawl-thread', { url: threadsUrl });
+        if (crawlResult && crawlResult.text) {
+          var enriched = '';
+          if (crawlResult.author) enriched += '帳號：' + crawlResult.author + '\n';
+          enriched += '❤️ ' + (crawlResult.likes || 0) + ' 💬 ' + (crawlResult.comments || 0) + '\n';
+          enriched += '來源：' + threadsUrl + '\n\n';
+          enriched += crawlResult.text;
+          viralInput.value = enriched;
+          loadingText.textContent = '爬取成功，開始分析...';
+          loadingBar.style.width = '40%';
+          // Trigger the real analysis
+          setTimeout(function() {
+            loadingState.classList.add('hidden');
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<span class="btn-icon">✨</span><span>開始拆解</span>';
+            analyzeBtn.click();
+          }, 500);
+          return;
+        }
+      } catch (err) {
+        console.log('URL crawl failed:', err);
+      }
+      loadingState.classList.add('hidden');
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = '<span class="btn-icon">✨</span><span>開始拆解</span>';
+    }
+  }, true); // capture phase so it runs first
+})();
+
+
+// ── Save to Notion + localStorage ──
+
+function getSavedCollection() {
+  try {
+    return JSON.parse(localStorage.getItem('viralCollection') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveToCollection(analysis) {
+  var collection = getSavedCollection();
+  var entry = {
+    id: Date.now().toString(36),
+    savedAt: new Date().toISOString(),
+    author: analysis.author || '',
+    hookType: analysis.hookType || '',
+    hookFormula: analysis.hookFormula || '',
+    whyViral: analysis.whyViral || '',
+    similarHooks: analysis.similarHooks || [],
+    matchedTemplateName: analysis.matchedTemplateName || '',
+    samplePost: analysis.samplePost || '',
+    samplePillar: analysis.samplePillar || '',
+    factChecks: analysis.factChecks || [],
+    likes: analysis.likes, comments: analysis.comments,
+    reposts: analysis.reposts, shares: analysis.shares,
+    originalText: analysis.originalText || '',
+  };
+  collection.unshift(entry);
+  if (collection.length > 100) collection = collection.slice(0, 100);
+  localStorage.setItem('viralCollection', JSON.stringify(collection));
+  return entry;
+}
+
+function removeFromCollection(id) {
+  var collection = getSavedCollection().filter(function(e) { return e.id !== id; });
+  localStorage.setItem('viralCollection', JSON.stringify(collection));
+  renderCollectionPage();
+}
+
+window.saveAnalysisToNotion = async function(index) {
+  var analyses = window._viralAnalyses || [];
+  var a = analyses[index];
+  if (!a) return;
+
+  var btn = document.getElementById('saveBtn' + index);
+  var statusEl = document.getElementById('saveStatus' + index);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 儲存中...'; }
+
+  // Save to localStorage first
+  var localEntry = saveToCollection(a);
+
+  // Then try Notion
+  try {
+    var res = await apiCall('/api/notion/save-analysis', { analysis: a });
+    if (res && res.url) {
+      if (statusEl) statusEl.innerHTML = '✅ 已收藏 — <a href="' + res.url + '" target="_blank">在 Notion 查看</a>';
+      if (btn) btn.textContent = '✅ 已收藏';
+    } else {
+      if (statusEl) statusEl.innerHTML = '✅ 已存到本地（Notion 同步失敗）';
+      if (btn) btn.textContent = '⭐ 已存本地';
+    }
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = '✅ 已存到本地（Notion: ' + e.message + '）';
+    if (btn) btn.textContent = '⭐ 已存本地';
+  }
+};
+
+
+// ── Template Library Page ──
+
+var _templatesLoaded = false;
+
+async function loadTemplatePage() {
+  if (_templatesLoaded) return;
+  var grid = document.getElementById('templateGrid');
+  if (!grid) return;
+
+  try {
+    var res = await apiCall('/api/templates/details');
+    if (!res || !res.templates) throw new Error('no data');
+    _templatesLoaded = true;
+
+    grid.innerHTML = res.templates.map(function(t, i) {
+      var emoji = t.name.split(' ')[0] || '📄';
+      var name = t.name.replace(/^[^\s]+\s*/, '');
+      var detailHtml = '';
+      if (t.format) {
+        detailHtml += '<div class="tpl-detail-section"><div class="tpl-detail-title">格式結構</div><div class="tpl-detail-code">' + t.format.replace(/</g,'&lt;') + '</div></div>';
+      }
+      if (t.sample) {
+        detailHtml += '<div class="tpl-detail-section"><div class="tpl-detail-title">範例</div><div class="tpl-detail-code">' + t.sample.replace(/</g,'&lt;') + '</div></div>';
+      }
+      if (t.why) {
+        detailHtml += '<div class="tpl-detail-section"><div class="tpl-detail-title">為什麼有效</div><div class="tpl-detail-code">' + t.why.replace(/</g,'&lt;') + '</div></div>';
+      }
+      return '<div class="tpl-card" data-tpl-id="' + t.id + '" onclick="this.classList.toggle(\'expanded\')">' +
+        '<div class="tpl-card-header"><span class="tpl-card-emoji">' + emoji + '</span><span class="tpl-card-name">' + name + '</span></div>' +
+        '<div class="tpl-card-desc">' + (t.desc || '') + '</div>' +
+        '<div class="tpl-card-tags">' +
+          '<span class="tpl-tag">' + t.id + '</span>' +
+        '</div>' +
+        '<div class="tpl-card-detail">' + detailHtml +
+          '<div class="tpl-card-actions"><button class="tpl-use-btn" onclick="event.stopPropagation(); useTemplate(\'' + t.id + '\', \'' + name.replace(/'/g,'') + '\')">用這個模板寫文案 →</button></div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<p style="color:var(--text-light)">載入失敗：' + e.message + '</p>';
+  }
+}
+
+window.useTemplate = function(templateId, templateName) {
+  // Navigate to copywriter with template pre-selected
+  var formatSelect = document.getElementById('formatSelect');
+  if (formatSelect) formatSelect.value = templateName;
+  var selectedFormat = document.getElementById('selectedFormat');
+  var selectedFormatName = document.getElementById('selectedFormatName');
+  if (selectedFormatName) selectedFormatName.textContent = templateName;
+  if (selectedFormat) selectedFormat.classList.remove('hidden');
+  var matrixCta = document.getElementById('matrixCta');
+  if (matrixCta) matrixCta.classList.add('hidden');
+  switchPage('copywriter');
+};
+
+// Template filter
+document.querySelectorAll('[data-tpl-filter]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('[data-tpl-filter]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var filter = btn.dataset.tplFilter;
+    document.querySelectorAll('.tpl-card').forEach(function(card) {
+      if (filter === 'all') { card.style.display = ''; return; }
+      var text = card.textContent;
+      card.style.display = text.includes(filter) ? '' : 'none';
+    });
+  });
+});
+
+
+// ── Collection Page ──
+
+function renderCollectionPage() {
+  var collection = getSavedCollection();
+  var list = document.getElementById('collectionList');
+  var stats = document.getElementById('collectionStats');
+  if (!list) return;
+
+  if (stats) {
+    stats.querySelector('.collection-count').textContent = collection.length + ' 篇收藏';
+  }
+
+  if (collection.length === 0) {
+    list.innerHTML = '<div class="collection-empty"><p>還沒有收藏</p><p>到「🔍 爆文拆解」分析貼文後，點擊「⭐ 收藏」即可加入</p></div>';
+    return;
+  }
+
+  list.innerHTML = collection.map(function(entry) {
+    var date = entry.savedAt ? new Date(entry.savedAt).toLocaleDateString('zh-TW') : '';
+    var samplePreview = (entry.samplePost || '').substring(0, 80).replace(/</g, '&lt;');
+    return '<div class="coll-card" onclick="this.classList.toggle(\'expanded\')">' +
+      '<div class="coll-card-header">' +
+        '<span class="coll-card-title">' + (entry.author || '未知來源') + '</span>' +
+        '<span class="coll-card-date">' + date + '</span>' +
+      '</div>' +
+      '<div class="coll-card-meta">' +
+        (entry.matchedTemplateName ? '<span class="tpl-tag">' + entry.matchedTemplateName + '</span>' : '') +
+        (entry.samplePillar ? '<span class="tpl-tag">' + entry.samplePillar + '</span>' : '') +
+        '<span>❤️ ' + (entry.likes || '—') + '</span>' +
+      '</div>' +
+      '<div class="coll-card-body">' +
+        (entry.samplePost ? '<div class="coll-sample">' + entry.samplePost.replace(/</g,'&lt;') + '</div>' : '') +
+        '<div class="coll-card-actions">' +
+          '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); copyCollectionItem(\'' + entry.id + '\')">📋 複製</button>' +
+          '<button class="coll-delete-btn" onclick="event.stopPropagation(); removeFromCollection(\'' + entry.id + '\')">🗑️ 刪除</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Load pages when navigating
+window.copyCollectionItem = function(id) {
+  var collection = getSavedCollection();
+  var entry = collection.find(function(e) { return e.id === id; });
+  if (entry && entry.samplePost) {
+    navigator.clipboard.writeText(entry.samplePost).catch(function() {});
+  }
+};
+
+var _origSwitchPage = typeof switchPage === 'function' ? switchPage : null;
+
+
+// ── Notion Collection Page ──
+
+var _ncData = [];
+var _ncSourceFilter = '';
+var _ncAccountFilter = '';
+
+async function renderNotionCollectionPage() {
+  var list = document.getElementById('ncList');
+  var stats = document.getElementById('ncStats');
+  if (!list) return;
+
+  list.innerHTML = '<div class="collection-empty"><p>載入中...</p></div>';
+
+  try {
+    var res = await apiCall('/api/notion/collection', null, 'GET');
+    _ncData = (res && res.items) || [];
+  } catch(e) {
+    list.innerHTML = '<div class="collection-empty"><p>載入失敗</p></div>';
+    return;
+  }
+
+  var accounts = {};
+  _ncData.forEach(function(item) {
+    if (item.author) accounts[item.author] = true;
+  });
+  var sel = document.getElementById('ncAccountFilter');
+  if (sel) {
+    sel.innerHTML = '<option value="">全部帳號</option>';
+    Object.keys(accounts).sort().forEach(function(a) {
+      sel.innerHTML += '<option value="' + a + '">' + a + '</option>';
+    });
+  }
+
+  _renderNcList();
+}
+
+function _renderNcList() {
+  var list = document.getElementById('ncList');
+  var stats = document.getElementById('ncStats');
+  if (!list) return;
+
+  var filtered = _ncData.filter(function(item) {
+    if (_ncSourceFilter && item.source !== _ncSourceFilter) return false;
+    if (_ncAccountFilter && item.author !== _ncAccountFilter) return false;
+    return true;
+  });
+
+  if (stats) {
+    stats.querySelector('.nc-count').textContent = filtered.length + ' 篇收藏';
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="collection-empty"><p>沒有符合條件的收藏</p></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(function(item) {
+    var date = item.date || '';
+    var sourceClass = 'source-' + (item.source || '');
+
+    var bodyHtml = '';
+    var sections = {};
+    var currentSection = '';
+    (item.body || []).forEach(function(blk) {
+      if (blk.type === 'heading_2') {
+        currentSection = blk.content;
+        sections[currentSection] = [];
+      } else if (currentSection) {
+        sections[currentSection] = sections[currentSection] || [];
+        if (blk.content) sections[currentSection].push(blk.content);
+      }
+    });
+
+    Object.keys(sections).forEach(function(title) {
+      var content = sections[title].join('\n');
+      if (!content.trim()) return;
+      var icon = '📄';
+      if (title.indexOf('格式') >= 0 || title.indexOf('Hook') >= 0) icon = '🎣';
+      else if (title.indexOf('範文') >= 0) icon = '📝';
+      else if (title.indexOf('原始') >= 0) icon = '📋';
+      else if (title.indexOf('查核') >= 0) icon = '🔍';
+      else if (title.indexOf('Sub') >= 0) icon = '☑️';
+      bodyHtml += '<div class="nc-section">'
+        + '<div class="nc-section-title">' + icon + ' ' + title + '</div>'
+        + '<div class="nc-section-content">' + content.replace(/</g, '&lt;') + '</div>'
+        + '</div>';
+    });
+
+    var engLevel = '';
+    var likes = parseInt((item.engagement || '').replace(/[^0-9]/g, '')) || 0;
+    if (likes >= 500) engLevel = '🔥🔥🔥';
+    else if (likes >= 200) engLevel = '🔥🔥';
+    else if (likes >= 100) engLevel = '🔥';
+
+    return '<div class="nc-card" onclick="this.classList.toggle(\'expanded\')">'
+      + '<div class="nc-card-header">'
+      +   '<span class="nc-card-title">' + (item.title || '未知') + '</span>'
+      +   '<span class="nc-card-date">' + date + '</span>'
+      + '</div>'
+      + '<div class="nc-card-meta">'
+      +   '<span class="nc-tag ' + sourceClass + '">' + (item.source || '') + '</span>'
+      +   (item.templateName ? '<span class="nc-tag">' + item.templateName + '</span>' : '')
+      +   (item.pillar ? '<span class="nc-tag">' + item.pillar + '</span>' : '')
+      +   '<span>' + (item.engagement || '') + '</span>'
+      +   (engLevel ? ' <span>' + engLevel + '</span>' : '')
+      + '</div>'
+      + '<div class="nc-card-body">'
+      +   bodyHtml
+      +   '<div class="nc-card-actions">'
+      +     '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); ncCopyItem(\'' + item.id + '\')">📋 複製</button>'
+      +     '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); ncUseForCopy(\'' + item.id + '\')">📝 用這個寫文案</button>'
+      +     '<a href="' + (item.url || '#') + '" target="_blank" class="btn btn-sm btn-outline" onclick="event.stopPropagation()">🔗 Notion</a>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+window.ncCopyItem = function(id) {
+  var item = _ncData.find(function(e) { return e.id === id; });
+  if (!item) return;
+  var sections = {};
+  var cur = '';
+  (item.body || []).forEach(function(blk) {
+    if (blk.type === 'heading_2') { cur = blk.content; sections[cur] = []; }
+    else if (cur && blk.content) { sections[cur] = sections[cur] || []; sections[cur].push(blk.content); }
+  });
+  var sampleKey = Object.keys(sections).find(function(k) { return k.indexOf('範文') >= 0; });
+  var text = sampleKey ? sections[sampleKey].join('\n') : JSON.stringify(item, null, 2);
+  navigator.clipboard.writeText(text).catch(function() {});
+};
+
+window.ncUseForCopy = function(id) {
+  var item = _ncData.find(function(e) { return e.id === id; });
+  if (!item) return;
+  var sections = {};
+  var cur = '';
+  (item.body || []).forEach(function(blk) {
+    if (blk.type === 'heading_2') { cur = blk.content; sections[cur] = []; }
+    else if (cur && blk.content) { sections[cur] = sections[cur] || []; sections[cur].push(blk.content); }
+  });
+  var sampleKey = Object.keys(sections).find(function(k) { return k.indexOf('範文') >= 0; });
+  var hookKey = Object.keys(sections).find(function(k) { return k.indexOf('格式') >= 0 || k.indexOf('Hook') >= 0; });
+  var hint = '';
+  if (hookKey) hint += '【格式參考】\n' + sections[hookKey].join('\n') + '\n\n';
+  if (sampleKey) hint += '【範文參考】\n' + sections[sampleKey].join('\n');
+  switchPage('copywriter');
+  document.getElementById('copywriterInput').value = hint || item.title;
+};
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('nc-filter-btn')) {
+    var row = e.target.closest('.nc-filter-row');
+    row.querySelectorAll('.nc-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    e.target.classList.add('active');
+    _ncSourceFilter = e.target.dataset.source || '';
+    _renderNcList();
+  }
+});
+
+var ncAccSel = document.getElementById('ncAccountFilter');
+if (ncAccSel) {
+  ncAccSel.addEventListener('change', function() {
+    _ncAccountFilter = this.value;
+    _renderNcList();
+  });
 }
 
 
@@ -935,19 +1582,38 @@ function saveTrendingCard(btn) {
   try {
     var card = JSON.parse(btn.dataset.card);
     var saved = JSON.parse(localStorage.getItem('savedTrending') || '[]');
-    // 檢查是否已收藏
     var exists = saved.some(function(s) { return s.url === card.url && s.text === card.text; });
     if (exists) {
       btn.innerHTML = '\u2705 \u5df2\u6536\u85cf';
       return;
     }
     card.savedAt = new Date().toISOString();
+    card.source = '\u7206\u6b3e\u7246';
     saved.unshift(card);
-    // 最多存 50 筆
     if (saved.length > 50) saved = saved.slice(0, 50);
     localStorage.setItem('savedTrending', JSON.stringify(saved));
-    btn.innerHTML = '\u2705 \u5df2\u6536\u85cf';
+    btn.innerHTML = '\u2b50 \u5132\u5b58\u4e2d...';
     btn.classList.add('saved');
+
+    var analysis = {
+      author: card.author || '\u672a\u77e5\u4f86\u6e90',
+      originalText: card.text || '',
+      hookType: (card.hook || '').split('\uff1a')[0] || '',
+      hookFormula: card.hook || '',
+      whyViral: card.why || '',
+      samplePost: card.apply || '',
+      samplePillar: '\u516b\u5b57',
+      sourceUrl: card.url || '',
+      likes: String(card.likes || 0),
+      comments: '0', reposts: '0', shares: '0',
+      matchedTemplateName: '\u7206\u6b3e\u7246\u6536\u85cf',
+      source: '\u7206\u6b3e\u7246',
+    };
+    apiCall('/api/notion/save-analysis', { analysis: analysis }).then(function(res) {
+      btn.innerHTML = '\u2705 \u5df2\u540c\u6b65 Notion';
+    }).catch(function() {
+      btn.innerHTML = '\u2705 \u5df2\u6536\u85cf\uff08\u672a\u540c\u6b65\uff09';
+    });
   } catch(e) {
     btn.innerHTML = '\u274c \u5931\u6557';
   }
@@ -982,28 +1648,28 @@ document.querySelectorAll('.platform-tab').forEach(function(tab) {
 document.getElementById('refreshTrendingBtn')?.addEventListener('click', async function() {
   var btn = this;
   btn.disabled = true;
-  btn.innerHTML = '\u23f3 \u66f4\u65b0\u4e2d...';
+  btn.innerHTML = '\u23f3 \u5df2\u89f8\u767c Discord \u722c\u6587... \u7d04\u9700 5-10 \u5206\u9418';
 
-  // 1. 觸發伺服器端更新
   try {
-    await apiCall('/api/trending/refresh', { method: 'POST', body: JSON.stringify({}) });
-  } catch(e) {}
+    var res = await apiCall('/api/trending/refresh', { method: 'POST', body: JSON.stringify({}) });
+    if (res && res.discord_triggered) {
+      btn.innerHTML = '\u2705 Discord \u5df2\u63a5\u6536\uff0c\u7b49\u5f85\u722c\u6587\u5b8c\u6210...';
+    } else {
+      btn.innerHTML = '\u26a0\ufe0f Gemini \u5099\u63f4\u4e2d... \u7d04\u9700 1-2 \u5206\u9418';
+    }
+  } catch(e) {
+    btn.innerHTML = '\u26a0\ufe0f \u89f8\u767c\u5931\u6557\uff0c\u91cd\u8a66\u4e2d...';
+  }
 
-  // 2. 等幾秒讓伺服器跑完（或直接重新 fetch Gist）
   btn.innerHTML = '\u23f3 \u8b80\u53d6\u6700\u65b0\u8cc7\u6599...';
-  await new Promise(function(r) { setTimeout(r, 3000); });
+  await new Promise(function(r) { setTimeout(r, 5000); });
 
-  // 3. 清空快取，重新從 Gist 讀取
   trendingCache = { all: null, bazi: null, tarot: null, mindful: null, persona: null, other: null };
   await loadAllTrending(true);
 
   btn.disabled = false;
-  var cat = currentTrendingFilter();
-  btn.innerHTML = (trendingCache[cat] && trendingCache[cat].length)
-    ? '\ud83d\udd04 \u66f4\u65b0\u7206\u6587'
-    : '\ud83d\udd04 \u66f4\u65b0\u7206\u6587';
+  btn.innerHTML = '\ud83d\udd04 \u66f4\u65b0\u7206\u6587';
 });
-
 loadAllTrending(false);
 
 
@@ -1948,129 +2614,358 @@ function renderPersonaTrending(filter) {
 }
 
 
-// ── Carousel: 3-Phase Flow ──
+// ── Carousel: WYSIWYG Editor ──
 
+var _carouselPages = [];
+var _carouselSessionId = '';
+var _carouselTemplates = [];
+var _carouselPalettes = [];
+var _carouselLayoutTypes = [];
+
+(async function initCarouselTemplates() {
+  try {
+    var res = await apiCall('/api/carousel-templates', null, 'GET');
+    if (!res) return;
+    _carouselTemplates = res.templates || [];
+    _carouselPalettes = res.palettes || [];
+    _carouselLayoutTypes = res.layout_types || [];
+
+    var tplSel = document.getElementById('carouselTemplateSelect');
+    if (tplSel) {
+      tplSel.innerHTML = _carouselTemplates.map(function(t) {
+        return '<option value="' + t.id + '"' + (t.id === 'editorial_serif_wash' ? ' selected' : '') + '>' + t.name + '</option>';
+      }).join('');
+    }
+    var palSel = document.getElementById('carouselPaletteSelect');
+    if (palSel) {
+      palSel.innerHTML = '<option value="">自動</option>' + _carouselPalettes.map(function(p) {
+        return '<option value="' + p.id + '">' + p.name + '</option>';
+      }).join('');
+      palSel.addEventListener('change', function() { _updatePalettePreview(this.value); });
+    }
+  } catch(e) {}
+})();
+
+function _updatePalettePreview(palId) {
+  var dots = document.getElementById('palettePreviewDots');
+  if (!dots) return;
+  var pal = _carouselPalettes.find(function(p) { return p.id === palId; });
+  if (!pal || !pal.colors) { dots.innerHTML = ''; return; }
+  dots.innerHTML = pal.colors.slice(0, 5).map(function(c) {
+    return '<span class="palette-dot" style="background:' + c + '"></span>';
+  }).join('') + '<span class="palette-dot" style="background:' + pal.accent + ';border-width:2px;"></span>';
+}
+
+function _parseSplitResult(text) {
+  var pages = [];
+  var blocks = text.split(/【第\s*(\d+)\s*頁】/);
+  for (var i = 1; i < blocks.length; i += 2) {
+    var num = parseInt(blocks[i]);
+    var body = (blocks[i + 1] || '').trim();
+    var title = '', content = '';
+    var titleMatch = body.match(/標題[：:]\s*(.+)/);
+    if (titleMatch) {
+      title = titleMatch[1].trim();
+      var afterTitle = body.substring(body.indexOf(titleMatch[0]) + titleMatch[0].length).trim();
+      var contentMatch = afterTitle.match(/內容[：:]\s*([\s\S]*)/);
+      content = contentMatch ? contentMatch[1].trim() : afterTitle.replace(/^封面\s*/, '').trim();
+    } else {
+      var lines = body.split('\n').filter(function(l) { return l.trim(); });
+      title = (lines[0] || '').replace(/^封面\s*/, '').trim();
+      content = lines.slice(1).join('\n').trim();
+    }
+    var type = 'narrative';
+    if (num === 1) type = 'cover';
+    pages.push({ page: num, type: type, title: title, content: content });
+  }
+  if (pages.length > 0) {
+    pages[pages.length - 1].type = 'closing';
+  }
+  return pages;
+}
+
+function _renderPageCards() {
+  var list = document.getElementById('carouselPageList');
+  if (!list) return;
+  var layoutOpts = (_carouselLayoutTypes.length ? _carouselLayoutTypes : [
+    {id:'cover',name:'封面',icon:'🎨'},{id:'narrative',name:'敘述型',icon:'📝'},
+    {id:'step_flow',name:'流程型',icon:'🔢'},{id:'bazi_compare',name:'對比型',icon:'⚖️'},
+    {id:'closing',name:'收尾頁',icon:'🎯'}
+  ]);
+
+  list.innerHTML = _carouselPages.map(function(pg, idx) {
+    var optionsHtml = layoutOpts.map(function(lt) {
+      return '<option value="' + lt.id + '"' + (pg.type === lt.id ? ' selected' : '') + '>' + lt.icon + ' ' + lt.name + '</option>';
+    }).join('');
+
+    return '<div class="carousel-page-card" draggable="true" data-idx="' + idx + '">'
+      + '<div class="carousel-page-card-header">'
+      +   '<span class="carousel-drag-handle">⋮⋮</span>'
+      +   '<span class="carousel-page-num">' + (idx + 1) + '</span>'
+      +   '<select class="carousel-layout-select" data-idx="' + idx + '">' + optionsHtml + '</select>'
+      +   '<div class="carousel-page-actions">'
+      +     (idx > 0 ? '<button title="上移" data-action="up" data-idx="' + idx + '">↑</button>' : '')
+      +     (idx < _carouselPages.length - 1 ? '<button title="下移" data-action="down" data-idx="' + idx + '">↓</button>' : '')
+      +     '<button title="複製" data-action="dup" data-idx="' + idx + '">📋</button>'
+      +     '<button class="delete-page" title="刪除" data-action="del" data-idx="' + idx + '">✕</button>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="carousel-page-card-body">'
+      +   '<input class="carousel-editable-title" data-idx="' + idx + '" data-field="title" value="' + (pg.title || '').replace(/"/g, '&quot;') + '" placeholder="標題（≤ 8 字）">'
+      +   '<textarea class="carousel-editable-content" data-idx="' + idx + '" data-field="content" placeholder="' + (pg.type === 'cover' ? '封面通常不需要內容' : '頁面內容') + '">' + (pg.content || '') + '</textarea>'
+      + '</div></div>';
+  }).join('');
+
+  var countEl = document.getElementById('carouselPageCount');
+  if (countEl) countEl.textContent = _carouselPages.length + ' 頁';
+
+  _bindPageCardEvents();
+}
+
+function _bindPageCardEvents() {
+  document.querySelectorAll('.carousel-layout-select').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      var idx = parseInt(this.dataset.idx);
+      if (_carouselPages[idx]) _carouselPages[idx].type = this.value;
+    });
+  });
+  document.querySelectorAll('.carousel-editable-title').forEach(function(inp) {
+    inp.addEventListener('input', function() {
+      var idx = parseInt(this.dataset.idx);
+      if (_carouselPages[idx]) _carouselPages[idx].title = this.value;
+    });
+  });
+  document.querySelectorAll('.carousel-editable-content').forEach(function(ta) {
+    ta.addEventListener('input', function() {
+      var idx = parseInt(this.dataset.idx);
+      if (_carouselPages[idx]) _carouselPages[idx].content = this.value;
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+  document.querySelectorAll('.carousel-page-actions button').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var idx = parseInt(this.dataset.idx);
+      var action = this.dataset.action;
+      if (action === 'up' && idx > 0) {
+        var tmp = _carouselPages[idx];
+        _carouselPages[idx] = _carouselPages[idx - 1];
+        _carouselPages[idx - 1] = tmp;
+      } else if (action === 'down' && idx < _carouselPages.length - 1) {
+        var tmp2 = _carouselPages[idx];
+        _carouselPages[idx] = _carouselPages[idx + 1];
+        _carouselPages[idx + 1] = tmp2;
+      } else if (action === 'dup') {
+        _carouselPages.splice(idx + 1, 0, JSON.parse(JSON.stringify(_carouselPages[idx])));
+      } else if (action === 'del' && _carouselPages.length > 1) {
+        _carouselPages.splice(idx, 1);
+      }
+      _renumberPages();
+      _renderPageCards();
+    });
+  });
+
+  // drag & drop
+  var cards = document.querySelectorAll('.carousel-page-card');
+  var dragIdx = null;
+  cards.forEach(function(card) {
+    card.addEventListener('dragstart', function(e) {
+      dragIdx = parseInt(this.dataset.idx);
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      dragIdx = null;
+    });
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var dropIdx = parseInt(this.dataset.idx);
+      if (dragIdx !== null && dragIdx !== dropIdx) {
+        var item = _carouselPages.splice(dragIdx, 1)[0];
+        _carouselPages.splice(dropIdx, 0, item);
+        _renumberPages();
+        _renderPageCards();
+      }
+    });
+  });
+}
+
+function _renumberPages() {
+  _carouselPages.forEach(function(pg, i) { pg.page = i + 1; });
+}
+
+// AI 拆頁按鈕
 document.getElementById('generateCarouselBtn').addEventListener('click', async function() {
   var text = document.getElementById('carouselInput').value.trim();
-  var resultsEl = document.getElementById('carouselResults');
   if (!text) { document.getElementById('carouselInput').focus(); return; }
 
   var btn = this;
   btn.disabled = true;
-  btn.innerHTML = '<span class="btn-icon">\u23f3</span><span>Step 1: \u62c6\u9801\u4e2d...</span>';
-  resultsEl.innerHTML = '';
-  resultsEl.classList.remove('hidden');
+  btn.innerHTML = '<span class="btn-icon">⏳</span><span>AI 拆頁中...</span>';
 
-  // Phase 1: 拆頁
   var splitResult = null;
   try {
     splitResult = await apiCall('/api/carousel-split', { text: text });
   } catch(e) {}
 
   if (!splitResult || !splitResult.split_result) {
-    resultsEl.innerHTML = '<div class="info-box"><p>\u26a0\ufe0f \u62c6\u9801\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u91cd\u8a66</p></div>';
     btn.disabled = false;
-    btn.innerHTML = '<span class="btn-icon">\ud83d\udcf1</span><span>\u751f\u6210\u8f2a\u64ad</span>';
+    btn.innerHTML = '<span class="btn-icon">📱</span><span>AI 拆頁</span>';
+    alert('拆頁失敗，請稍後重試');
     return;
   }
 
-  var sessionId = splitResult.session_id;
+  _carouselSessionId = splitResult.session_id;
+  _carouselPages = _parseSplitResult(splitResult.split_result);
 
-  // 顯示拆頁結果
-  resultsEl.innerHTML = '<div class="flow-step-card">'
-    + '<div class="flow-step-header"><span class="flow-step-badge ai">Step 1: \u62c6\u9801\u7d50\u679c</span></div>'
-    + '<textarea class="tool-textarea" id="carouselSplitEdit" style="min-height:250px;">' + splitResult.split_result + '</textarea>'
-    + '<div class="copy-actions" style="margin-top:8px;">'
-    + '<button class="btn btn-primary" id="carouselAnalyzeBtn">\u2192 Step 2: \u7248\u9762\u5206\u6790 + \u6e32\u67d3</button>'
-    + '<button class="btn btn-outline" id="carouselEditDoneBtn">\u270f\ufe0f \u4fee\u6539\u5b8c\u6210\uff0c\u91cd\u65b0\u62c6\u9801</button>'
-    + '</div></div>';
+  if (_carouselPages.length === 0) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">📱</span><span>AI 拆頁</span>';
+    alert('無法解析拆頁結果，請調整文案後重試');
+    return;
+  }
 
-  // Step 2: 版面分析 + 渲染
-  document.getElementById('carouselAnalyzeBtn').addEventListener('click', async function() {
-    var carouselText = document.getElementById('carouselSplitEdit').value.trim();
-    this.disabled = true;
-    this.innerHTML = '\u23f3 \u7248\u9762\u5206\u6790\u4e2d...';
-
-    var layoutResult = null;
-    try {
-      layoutResult = await apiCall('/api/carousel-layout', { session_id: sessionId, carousel_text: carouselText });
-    } catch(e) {}
-
-    if (!layoutResult || !layoutResult.pages) {
-      resultsEl.innerHTML += '<div class="info-box"><p>\u26a0\ufe0f \u7248\u9762\u5206\u6790\u5931\u6557</p></div>';
-      this.disabled = false;
-      this.innerHTML = '\u2192 Step 2: \u7248\u9762\u5206\u6790 + \u6e32\u67d3';
-      return;
-    }
-
-    this.innerHTML = '\u23f3 \u6e32\u67d3\u5716\u7247\u4e2d...';
-
-    // 渲染
-    var renderResult = null;
-    try {
-      renderResult = await apiCall('/api/carousel-render', {
-        session_id: sessionId,
-        pages: layoutResult.pages,
-        topic: text.substring(0, 30),
+  // AI 版面分析
+  btn.innerHTML = '<span class="btn-icon">⏳</span><span>版面分析中...</span>';
+  try {
+    var layoutResult = await apiCall('/api/carousel-layout', {
+      session_id: _carouselSessionId,
+      carousel_text: splitResult.split_result,
+    });
+    if (layoutResult && layoutResult.pages) {
+      layoutResult.pages.forEach(function(lp) {
+        var match = _carouselPages.find(function(cp) { return cp.page === lp.page; });
+        if (match) {
+          match.type = lp.type || match.type;
+          if (lp.title) match.title = lp.title;
+          if (lp.content) match.content = lp.content;
+        }
       });
-    } catch(e) {}
-
-    if (renderResult && renderResult.images && renderResult.images.length) {
-      var imgHtml = '<div class="flow-step-card">'
-        + '<div class="flow-step-header"><span class="flow-step-badge check">Step 2: \u6e32\u67d3\u5b8c\u6210 (' + renderResult.count + ' \u9801)</span></div>'
-        + '<div class="carousel-preview">';
-      renderResult.images.forEach(function(img) {
-        imgHtml += '<div class="carousel-preview-page">'
-          + '<img src="' + API_BASE + img.url + '" alt="' + img.filename + '">'
-          + '<span class="carousel-page-label">' + img.filename + '</span>'
-          + '</div>';
-      });
-      imgHtml += '</div>'
-        + '<div class="copy-actions" style="margin-top:12px;">'
-        + '<button class="btn btn-primary" onclick="downloadAllCarousel(\'' + sessionId + '\')">\ud83d\udcbe \u4e0b\u8f09\u5168\u90e8</button>'
-        + '<button class="btn btn-outline" onclick="saveCarouselToNotion(\'' + sessionId + '\')">\ud83d\udccc \u5b58\u5165 Notion</button>'
-        + '</div></div>';
-      resultsEl.innerHTML += imgHtml;
-    } else {
-      resultsEl.innerHTML += '<div class="info-box"><p>\u26a0\ufe0f \u6e32\u67d3\u5931\u6557\uff1a' + (renderResult ? renderResult.error || '' : '\u7121\u56de\u61c9') + '</p></div>';
     }
+  } catch(e) {}
 
-    this.disabled = false;
-    this.innerHTML = '\u2192 Step 2: \u7248\u9762\u5206\u6790 + \u6e32\u67d3';
-  });
+  document.getElementById('carouselEditorArea').classList.remove('hidden');
+  _renderPageCards();
+  document.getElementById('carouselResults').innerHTML = '';
+  document.getElementById('carouselResults').classList.add('hidden');
 
   btn.disabled = false;
-  btn.innerHTML = '<span class="btn-icon">\ud83d\udcf1</span><span>\u751f\u6210\u8f2a\u64ad</span>';
+  btn.innerHTML = '<span class="btn-icon">📱</span><span>AI 拆頁</span>';
+});
+
+// 新增頁面
+document.getElementById('carouselAddPageBtn').addEventListener('click', function() {
+  _carouselPages.push({
+    page: _carouselPages.length + 1,
+    type: 'narrative',
+    title: '',
+    content: '',
+  });
+  _renderPageCards();
+  var list = document.getElementById('carouselPageList');
+  if (list && list.lastElementChild) {
+    list.lastElementChild.querySelector('.carousel-editable-title').focus();
+  }
+});
+
+// 重新拆頁
+document.getElementById('carouselResetBtn').addEventListener('click', function() {
+  document.getElementById('carouselEditorArea').classList.add('hidden');
+  _carouselPages = [];
+  document.getElementById('carouselInput').focus();
+});
+
+// 渲染輪播圖
+document.getElementById('carouselRenderBtn').addEventListener('click', async function() {
+  if (_carouselPages.length === 0) return;
+
+  var btn = this;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-icon">⏳</span><span>渲染中...</span>';
+
+  var template = document.getElementById('carouselTemplateSelect').value || 'editorial_serif_wash';
+  var palette = document.getElementById('carouselPaletteSelect').value || '';
+  var topic = document.getElementById('carouselInput').value.substring(0, 30) || 'carousel';
+
+  _renumberPages();
+
+  var renderResult = null;
+  try {
+    renderResult = await apiCall('/api/carousel-render', {
+      session_id: _carouselSessionId,
+      pages: _carouselPages,
+      topic: topic,
+      template: template,
+      palette: palette,
+    });
+  } catch(e) {}
+
+  var resultsEl = document.getElementById('carouselResults');
+
+  if (renderResult && renderResult.images && renderResult.images.length) {
+    var imgHtml = '<div class="flow-step-card">'
+      + '<div class="flow-step-header"><span class="flow-step-badge check">渲染完成（' + renderResult.count + ' 頁）</span></div>'
+      + '<div class="carousel-preview">';
+    renderResult.images.forEach(function(img) {
+      imgHtml += '<div class="carousel-preview-page">'
+        + '<img src="' + API_BASE + img.url + '" alt="' + img.filename + '">'
+        + '<span class="carousel-page-label">' + img.filename + '</span>'
+        + '</div>';
+    });
+    imgHtml += '</div>'
+      + '<div class="copy-actions" style="margin-top:12px;">'
+      + '<button class="btn btn-primary" onclick="downloadAllCarousel(\'' + _carouselSessionId + '\')">💾 下載全部</button>'
+      + '<button class="btn btn-outline" onclick="saveCarouselToNotion(\'' + _carouselSessionId + '\')">📌 存入 Notion</button>'
+      + '</div></div>';
+    resultsEl.innerHTML = imgHtml;
+    resultsEl.classList.remove('hidden');
+  } else {
+    resultsEl.innerHTML = '<div class="info-box"><p>⚠️ 渲染失敗：' + (renderResult ? renderResult.error || '' : '無回應') + '</p></div>';
+    resultsEl.classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span class="btn-icon">🖼️</span><span>渲染輪播圖</span>';
 });
 
 async function downloadAllCarousel(sessionId) {
-  // 簡易下載：逐張開新分頁
   try {
     var result = await apiCall('/api/carousel-render', { session_id: sessionId });
     if (result && result.images) {
-      result.images.forEach(function(img) {
-        var a = document.createElement('a');
-        a.href = API_BASE + img.url;
-        a.download = img.filename;
-        a.click();
+      result.images.forEach(function(img, i) {
+        setTimeout(function() {
+          var a = document.createElement('a');
+          a.href = API_BASE + img.url;
+          a.download = img.filename;
+          a.click();
+        }, i * 300);
       });
     }
-  } catch(e) { alert('\u4e0b\u8f09\u5931\u6557'); }
+  } catch(e) { alert('下載失敗'); }
 }
 
 async function saveCarouselToNotion(sessionId) {
-  var session = _carousel_sessions ? _carousel_sessions[sessionId] : null;
-  // 透過 API 存
+  var contentParts = _carouselPages.map(function(pg) {
+    return '【第 ' + pg.page + ' 頁】' + pg.type + '\n標題：' + pg.title + '\n內容：' + pg.content;
+  });
   try {
     await apiCall('/api/save-content', {
-      title: '\u8f2a\u64ad ' + new Date().toLocaleDateString('zh-TW'),
-      content: document.getElementById('carouselSplitEdit')?.value || '',
-      pillar: currentPillar || '\u516b\u5b57',
-      status: '\u8f2a\u64ad\u5f85\u751f\u5716',
+      title: '輪播 ' + new Date().toLocaleDateString('zh-TW'),
+      content: contentParts.join('\n\n'),
+      pillar: currentPillar || '八字',
+      status: '輪播待生圖',
       db: 'ig',
     });
-    alert('\u2705 \u5df2\u5b58\u5165 Notion');
-  } catch(e) { alert('\u5132\u5b58\u5931\u6557'); }
+    alert('✅ 已存入 Notion');
+  } catch(e) { alert('儲存失敗'); }
 }
 
 

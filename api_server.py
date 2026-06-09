@@ -41,6 +41,7 @@ NOTION_TOKEN = os.environ.get('NOTION_TOKEN', '')
 NOTION_THREADS_DB = "2d81408d-91fd-807e-8693-cea19edc57ec"
 NOTION_IG_DB = "2d81408d-91fd-803c-b46b-fd19cc7dc91b"
 NOTION_INSPIRATION_DB = os.environ.get('NOTION_INSPIRATION_DB', '2d81408d-91fd-80a9-a3cb-f09e9a6b8086')
+NOTION_COLLECTION_DB = os.environ.get('NOTION_COLLECTION_DB', '3791408d-91fd-8121-8983-cf19b79bd7e1')
 NOTION_HEADERS = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
     "Content-Type": "application/json",
@@ -275,39 +276,102 @@ def health():
 
 # ─── 爆文靈感助手 API ───
 
+TEMPLATE_LIBRARY = [
+    {"id": "recommend", "name": "💯 推薦型", "desc": "我幫你研究過了，我超推___"},
+    {"id": "scene_contrast", "name": "🔥 場景對比型", "desc": "痛點場景 vs 享受場景的反差"},
+    {"id": "story_burst", "name": "📖 故事爆發型", "desc": "超短斷言→真人故事→轉折→揭露"},
+    {"id": "clear_name", "name": "🐶 替讀者開脫罪名", "desc": "不是A，是B 的多層翻轉"},
+    {"id": "age_realize", "name": "✨ _歲後才發現", "desc": "年齡+反直覺人生觀察"},
+    {"id": "suggest", "name": "💬 真的很建議", "desc": "反直覺建議+場景佐證"},
+    {"id": "call_ta", "name": "🧑‍💼 呼喚你的TA", "desc": "給___的人：點名受眾+心聲"},
+    {"id": "origin_story", "name": "❤️ 起心動念", "desc": "為什麼開始做這件事的故事"},
+    {"id": "show_expertise", "name": "🧑‍💼 展現專業", "desc": "常見迷思→正確觀念→好記比喻"},
+    {"id": "interview_note", "name": "✏️ 訪談筆記", "desc": "某人說了一句話讓我印象很深"},
+    {"id": "intro_follow", "name": "🐣 讓人想追蹤的自介", "desc": "我是誰+為什麼+追蹤得到什麼"},
+    {"id": "challenge_frame", "name": "💜 挑戰社會框架", "desc": "大家都說___但我覺得___"},
+    {"id": "golden_quote", "name": "🐸 金句型", "desc": "一句話+留白，讓讀者自己想"},
+    {"id": "small_habit", "name": "🧑‍🦱 持之以恆的小習慣", "desc": "每天做的一件小事+為什麼有效"},
+    {"id": "checklist", "name": "✅ 對號入座清單型", "desc": "來看看你有沒有這幾點"},
+    {"id": "shock_assert", "name": "⚡ 超短斷言展開型", "desc": "反直覺一句話→展開→驗證"},
+    {"id": "timeline", "name": "📅 時間軸對比型", "desc": "過去的我→現在的我→轉折點"},
+]
+
+
+def _parse_claude_json(result):
+    """從 Claude 回覆中解析 JSON"""
+    clean = result.strip()
+    if clean.startswith('```'):
+        clean = clean.split('\n', 1)[1] if '\n' in clean else clean[3:]
+    if clean.endswith('```'):
+        clean = clean[:-3]
+    clean = clean.strip()
+    if clean.startswith('json'):
+        clean = clean[4:].strip()
+    return json.loads(clean)
+
+
 @app.route('/api/analyze-viral', methods=['POST'])
 def analyze_viral():
     data = request.json or {}
     text = data.get('text', '').strip()
-    images = data.get('images', [])  # base64 encoded images
+    images = data.get('images', [])
+    pillar = data.get('pillar', '八字')
 
     if not text and not images:
         return jsonify({'error': '請輸入貼文內容或上傳截圖'}), 400
 
-    # 讀取分析框架
-    analysis_framework = """你是 Threads 爆文分析專家。請用以下框架分析貼文：
+    # OCR images if provided
+    ocr_texts = []
+    if images:
+        for img in images:
+            ocr_result = _ocr_image(img)
+            if ocr_result:
+                ocr_texts.append(ocr_result)
 
-## 分析框架（文字複利計劃）
+    template_list = '\n'.join([f"- {t['name']}：{t['desc']}（id: {t['id']}）" for t in TEMPLATE_LIBRARY])
 
-對每篇貼文分析：
-1. **HOOK 開頭公式拆解**：
-   - 這是什麼樣的開頭（情境代入型/痛點呼喚型/認知衝突型/數據權威型/故事懸念型）
-   - 開頭公式拆解（結構分析）
-   - 舉 3 個類似的句子（以八字/塔羅/覺察領域改寫）
-   - 一句話解釋為什麼會紅
+    analysis_framework = f"""你是 Threads 爆文分析專家，服務對象是 @jhen_insightlab（八字 × 塔羅 × 覺察，同行者語氣、非老師姿態）。
 
-2. **互動數據**：列出讚/留言/轉發（如有提供）
+## 分析框架
 
-3. **可直接套用格式**：以 @jhen_insightlab（八字 × 塔羅 × 覺察）的領域，列出 5-8 個可直接套用的文案模板步驟
+對每篇貼文分析以下內容：
 
-## 輸出格式
-請用 JSON 格式回覆，結構如下：
+### 1. HOOK 開頭公式拆解
+- 開頭類型（情境代入型/痛點呼喚型/認知衝突型/數據權威型/故事懸念型/場景對比型/斷言展開型）
+- 開頭公式拆解（結構分析）
+- 舉 3 個以八字/塔羅/覺察領域改寫的類似句子
+- 一句話解釋為什麼會紅
+
+### 2. 互動數據
+列出讚/留言/轉發/分享（如有提供）
+
+### 3. 模板識別
+從以下模板庫中選出最匹配的 1-2 個模板：
+{template_list}
+
+### 4. 套用範文
+用識別出的模板，以「{pillar}」為主題，寫出一篇完整的 Threads 文案（100-300字）。
+規則：
+- 繁體中文，口語自然
+- 同行者語氣，不以老師自居
+- 遵循 HPC 結構（Hook→Pacing→CTA）
+- 結尾加「學習中的觀察筆記 💕」
+- 八字內容加「僅供參考」
+
+### 5. 事實查核
+列出範文中需要查核的事實性內容（命理概念、數據、引用等），標注：
+- ✅ 正確（說明為什麼）
+- ⚠️ 需確認（說明哪裡可能有疑慮）
+- ❌ 不正確（說明正確資訊）
+
+## 輸出格式（嚴格 JSON）
 ```json
-{
+{{
   "total_posts": 數字,
   "analyses": [
-    {
+    {{
       "author": "帳號名稱或摘要",
+      "original_text": "原始貼文內容（前200字）",
       "hook_type": "開頭類型",
       "hook_formula": "公式拆解",
       "similar_hooks": ["句子1", "句子2", "句子3"],
@@ -315,10 +379,18 @@ def analyze_viral():
       "likes": "數字或—",
       "comments": "數字或—",
       "reposts": "數字或—",
-      "templates": ["步驟1", "步驟2", "..."]
-    }
+      "shares": "數字或—",
+      "templates": ["步驟1", "步驟2", "..."],
+      "matched_template_id": "模板id",
+      "matched_template_name": "模板名稱",
+      "sample_post": "完整的套用範文（含換行）",
+      "sample_pillar": "{pillar}",
+      "fact_checks": [
+        {{"content": "查核內容", "status": "✅/⚠️/❌", "note": "說明"}}
+      ]
+    }}
   ]
-}
+}}
 ```
 只回覆 JSON，不要其他文字。"""
 
@@ -327,45 +399,464 @@ def analyze_viral():
     if text:
         prompt_parts.append(f"\n\n## 要分析的貼文內容：\n\n{text}")
 
-    if images:
-        prompt_parts.append(f"\n\n（另附 {len(images)} 張截圖，請辨識圖中文字後一併分析）")
-        # TODO: 未來可用 Claude vision API 直接分析圖片
-        # 目前先提示用戶圖片辨識功能開發中
+    if ocr_texts:
+        prompt_parts.append("\n\n## 截圖辨識內容：\n\n" + "\n\n---\n\n".join(ocr_texts))
+    elif images:
+        prompt_parts.append(f"\n\n（另附 {len(images)} 張截圖，但 OCR 辨識失敗，請根據已有文字分析）")
 
     prompt = '\n'.join(prompt_parts)
-    result = run_claude(prompt)
+
+    if images and ANTHROPIC_API_KEY:
+        result = _analyze_with_vision(prompt, images)
+    else:
+        result = run_claude(prompt)
 
     if not result:
         return jsonify({'error': 'Claude API 暫時無法回應，請稍後重試'}), 503
 
-    # 嘗試解析 JSON
     try:
-        # 移除 markdown code block
-        clean = result.strip()
-        if clean.startswith('```'):
-            clean = clean.split('\n', 1)[1] if '\n' in clean else clean[3:]
-        if clean.endswith('```'):
-            clean = clean[:-3]
-        clean = clean.strip()
-        if clean.startswith('json'):
-            clean = clean[4:].strip()
-        parsed = json.loads(clean)
+        parsed = _parse_claude_json(result)
         return jsonify(parsed)
     except json.JSONDecodeError:
-        # 如果無法解析 JSON，返回原始文字
         return jsonify({
             'total_posts': 1,
             'analyses': [{
                 'author': '分析結果',
-                'hook_type': '—',
-                'hook_formula': '—',
-                'similar_hooks': [],
-                'why_viral': '—',
-                'likes': '—', 'comments': '—', 'reposts': '—',
+                'hook_type': '—', 'hook_formula': '—',
+                'similar_hooks': [], 'why_viral': '—',
+                'likes': '—', 'comments': '—', 'reposts': '—', 'shares': '—',
                 'templates': [],
+                'matched_template_id': '', 'matched_template_name': '',
+                'sample_post': '', 'sample_pillar': pillar,
+                'fact_checks': [],
                 'raw_text': result
             }]
         })
+
+
+def _analyze_with_vision(prompt, images):
+    """用 Anthropic Vision API 直接分析圖片"""
+    if not ANTHROPIC_API_KEY:
+        return run_claude(prompt)
+    try:
+        content = []
+        for img in images:
+            if ',' in img:
+                header, img_data = img.split(',', 1)
+                media_type = header.split(';')[0].split(':')[1] if ':' in header else 'image/png'
+            else:
+                img_data = img
+                media_type = 'image/png'
+            content.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_data}})
+        content.append({"type": "text", "text": prompt})
+
+        req_data = json.dumps({
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 4096,
+            "messages": [{"role": "user", "content": content}]
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            'https://api.anthropic.com/v1/messages',
+            data=req_data,
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+            }
+        )
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read().decode('utf-8'))
+            texts = [b.get('text', '') for b in result.get('content', []) if b.get('type') == 'text']
+            return '\n'.join(texts).strip() or None
+    except Exception as e:
+        print(f"Vision API error: {e}", flush=True)
+        return run_claude(prompt)
+
+
+@app.route('/api/template-adjust', methods=['POST'])
+def template_adjust():
+    """調整/重寫套用範文"""
+    data = request.json or {}
+    post = data.get('post', '').strip()
+    action = data.get('action', 'suggest')
+    pillar = data.get('pillar', '八字')
+    user_edit = data.get('user_edit', '')
+
+    if not post:
+        return jsonify({'error': '請提供文案內容'}), 400
+
+    if action == 'suggest':
+        prompt = f"""你是 Threads 文案教練，以下是一篇「{pillar}」領域的文案。
+請給出 3-5 個具體的調整建議（每個建議附上修改前→修改後的範例），讓文案更有互動力。
+
+規則：繁體中文、口語自然、同行者語氣、100-300字。
+
+文案：
+{post}
+
+用 JSON 格式回覆：
+{{"suggestions": [{{"point": "建議標題", "before": "修改前", "after": "修改後", "reason": "原因"}}]}}
+只回覆 JSON。"""
+    elif action == 'rewrite':
+        prompt = f"""你是 Threads 文案寫手，以下是一篇「{pillar}」領域的文案參考。
+請用相同的模板格式，但完全不同的切入角度，重新寫一篇（100-300字）。
+
+規則：繁體中文、口語自然、同行者語氣、不以老師自居。
+結尾加「學習中的觀察筆記 💕」，八字內容加「僅供參考」。
+
+參考文案：
+{post}
+
+用 JSON 格式回覆：
+{{"rewritten_post": "完整新文案"}}
+只回覆 JSON。"""
+    elif action == 'apply_edit':
+        prompt = f"""以下是用戶自己修改過的「{pillar}」領域 Threads 文案。
+請做最後潤稿（保留用戶語氣和內容，只修正不通順處）並事實查核。
+
+用戶修改後的文案：
+{user_edit}
+
+用 JSON 格式回覆：
+{{"polished_post": "潤稿後文案", "fact_checks": [{{"content": "查核內容", "status": "✅/⚠️/❌", "note": "說明"}}]}}
+只回覆 JSON。"""
+    else:
+        return jsonify({'error': '未知的 action'}), 400
+
+    result = run_claude(prompt)
+    if not result:
+        return jsonify({'error': 'Claude API 暫時無法回應'}), 503
+
+    try:
+        parsed = _parse_claude_json(result)
+        return jsonify(parsed)
+    except json.JSONDecodeError:
+        return jsonify({'raw_text': result})
+
+
+@app.route('/api/fact-check', methods=['POST'])
+def fact_check():
+    """獨立事實查核端點"""
+    data = request.json or {}
+    post = data.get('post', '').strip()
+    pillar = data.get('pillar', '八字')
+
+    if not post:
+        return jsonify({'error': '請提供文案內容'}), 400
+
+    prompt = f"""你是命理/塔羅事實查核專家。
+請查核以下「{pillar}」領域 Threads 文案中的所有事實性內容。
+
+查核範圍：
+- 命理概念是否正確（十神定義、五行生剋、天干地支關係等）
+- 塔羅牌義是否正確（正逆位含義、牌面象徵）
+- 引用的數據或說法是否有根據
+- 是否有容易誤導讀者的表述
+
+文案內容：
+{post}
+
+用 JSON 格式回覆：
+{{"fact_checks": [{{"content": "查核內容", "status": "✅/⚠️/❌", "note": "詳細說明", "source": "參考來源（如有）"}}], "overall": "整體評估（一句話）"}}
+只回覆 JSON。"""
+
+    result = run_claude(prompt)
+    if not result:
+        return jsonify({'error': 'Claude API 暫時無法回應'}), 503
+
+    try:
+        parsed = _parse_claude_json(result)
+        return jsonify(parsed)
+    except json.JSONDecodeError:
+        return jsonify({'raw_text': result})
+
+
+@app.route('/api/templates', methods=['GET'])
+def get_templates():
+    """回傳模板庫清單"""
+    return jsonify({'templates': TEMPLATE_LIBRARY})
+
+
+@app.route('/api/templates/details', methods=['GET'])
+def get_template_details():
+    """回傳模板庫完整詳情（從 markdown 解析）"""
+    md_path = os.path.join(PROJECT_ROOT, 'templates', 'viral-template-library.md')
+    if not os.path.exists(md_path):
+        return jsonify({'templates': TEMPLATE_LIBRARY})
+    with open(md_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    templates = []
+    for t in TEMPLATE_LIBRARY:
+        entry = dict(t)
+        idx = content.find(f"## 模板 {TEMPLATE_LIBRARY.index(t)+1}")
+        if idx == -1:
+            name_clean = t['name'].split(' ', 1)[-1] if ' ' in t['name'] else t['name']
+            idx = content.find(name_clean)
+        if idx >= 0:
+            next_idx = content.find('\n## 模板 ', idx + 10)
+            if next_idx == -1:
+                next_idx = content.find('\n## 使用指南', idx + 10)
+            section = content[idx:next_idx] if next_idx > 0 else content[idx:]
+            import re
+            code_blocks = re.findall(r'```\n(.*?)```', section, re.DOTALL)
+            entry['format'] = code_blocks[0].strip() if code_blocks else ''
+            entry['sample'] = code_blocks[1].strip() if len(code_blocks) > 1 else ''
+            why_match = re.search(r'### 為什麼有效\n(.*?)(?=\n###|\n---|\Z)', section, re.DOTALL)
+            entry['why'] = why_match.group(1).strip() if why_match else ''
+        templates.append(entry)
+    return jsonify({'templates': templates})
+
+
+# ─── Notion 爆文收藏 API ───
+
+@app.route('/api/notion/save-analysis', methods=['POST'])
+def save_analysis_to_notion():
+    """將爆文分析結果存到 Notion 爆文收藏資料庫"""
+    data = request.json or {}
+    analysis = data.get('analysis', {})
+    if not analysis:
+        return jsonify({'error': '缺少分析資料'}), 400
+
+    author = analysis.get('author', '未知來源')
+    template_name = analysis.get('matchedTemplateName', '')
+    analysis_title = analysis.get('analysisTitle', '')
+    title = analysis_title or template_name or '未分類'
+    pillar = analysis.get('samplePillar', '八字')
+    sample_post = analysis.get('samplePost', '')
+    hook_type = analysis.get('hookType', '')
+    hook_formula = analysis.get('hookFormula', '')
+    why_viral = analysis.get('whyViral', '')
+    similar_hooks = analysis.get('similarHooks', [])
+    fact_checks = analysis.get('factChecks', [])
+    likes = str(analysis.get('likes', ''))
+    comments = str(analysis.get('comments', ''))
+    reposts = str(analysis.get('reposts', ''))
+    shares = str(analysis.get('shares', ''))
+    source_url = analysis.get('sourceUrl', '')
+    original_text = analysis.get('originalText', '')
+
+    engagement = f"❤️ {likes} 💬 {comments} 🔄 {reposts} 📤 {shares}"
+
+    children = []
+    if original_text:
+        children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "原始貼文"}}]}})
+        children.append({"object": "block", "type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": original_text[:2000]}}], "language": "plain text"}})
+
+    children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "爆款格式"}}]}})
+    fmt_text = f"Hook 類型：{hook_type}\n公式拆解：{hook_formula}\n為什麼爆：{why_viral}"
+    children.append({"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": fmt_text[:2000]}}]}})
+
+    if similar_hooks:
+        children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "套用領域改寫"}}]}})
+        for h in similar_hooks[:5]:
+            children.append({"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": str(h)[:200]}}]}})
+
+    if sample_post:
+        children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": f"套用範文（{pillar}版）"}}]}})
+        children.append({"object": "block", "type": "code", "code": {"rich_text": [{"type": "text", "text": {"content": sample_post[:2000]}}], "language": "plain text"}})
+
+    if fact_checks:
+        children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "事實查核"}}]}})
+        for fc in fact_checks[:5]:
+            fc_text = f"{fc.get('status','')} {fc.get('content','')} — {fc.get('note','')}"
+            children.append({"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": fc_text[:200]}}]}})
+
+    children.append({"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "Sub-tasks"}}]}})
+    children.append({"object": "block", "type": "to_do", "to_do": {"rich_text": [{"type": "text", "text": {"content": "到一則爆文留言"}}], "checked": False}})
+    children.append({"object": "block", "type": "to_do", "to_do": {"rich_text": [{"type": "text", "text": {"content": "到一則同性質帳號留言"}}], "checked": False}})
+
+    source = analysis.get('source', '爆款牆' if '爆款牆' in (template_name or '') else '爆文拆解')
+
+    properties = {
+        "模板名稱": {"title": [{"text": {"content": title[:100]}}]},
+        "適用支柱": {"multi_select": [{"name": pillar}]},
+        "建立日期": {"date": {"start": datetime.now().strftime('%Y-%m-%d')}},
+        "帳號": {"rich_text": [{"text": {"content": author[:100]}}]},
+        "來源": {"select": {"name": source}},
+    }
+    if template_name:
+        properties["模板類別"] = {"select": {"name": template_name[:100]}}
+    if engagement.strip():
+        properties["模板ID"] = {"rich_text": [{"text": {"content": engagement[:200]}}]}
+    try:
+        likes_num = int(likes) if likes else 0
+    except ValueError:
+        likes_num = 0
+    if likes_num >= 500:
+        properties["爆紅程度"] = {"select": {"name": "🔥🔥🔥"}}
+    elif likes_num >= 200:
+        properties["爆紅程度"] = {"select": {"name": "🔥🔥"}}
+    elif likes_num >= 100:
+        properties["爆紅程度"] = {"select": {"name": "🔥"}}
+
+    result = notion_api('pages', {
+        "parent": {"database_id": NOTION_COLLECTION_DB},
+        "properties": properties,
+        "children": children
+    })
+
+    if result.get('error'):
+        return jsonify({'error': result.get('message', '儲存失敗')}), 500
+
+    page_url = result.get('url', '')
+    return jsonify({'status': 'ok', 'url': page_url, 'page_id': result.get('id', '')})
+
+
+@app.route('/api/notion/collection', methods=['GET'])
+def get_notion_collection():
+    """從 Notion 爆文收藏資料庫讀取所有頁面（含完整 body）"""
+    source_filter = request.args.get('source', '')
+    page_size = min(int(request.args.get('limit', '50')), 100)
+    start_cursor = request.args.get('cursor', '')
+
+    payload = {
+        "sorts": [{"timestamp": "created_time", "direction": "descending"}],
+        "page_size": page_size,
+    }
+    if start_cursor:
+        payload["start_cursor"] = start_cursor
+
+    result = notion_api(f'databases/{NOTION_COLLECTION_DB}/query', payload)
+    if result.get('error'):
+        return jsonify({'error': result.get('message', '查詢失敗')}), 500
+
+    items = []
+    for page in result.get('results', []):
+        props = page.get('properties', {})
+        title_arr = props.get('模板名稱', {}).get('title', [])
+        title = title_arr[0]['plain_text'] if title_arr else ''
+
+        pillar_ms = props.get('適用支柱', {}).get('multi_select', [])
+        pillar = pillar_ms[0]['name'] if pillar_ms else ''
+
+        template_sel = props.get('模板類別', {}).get('select')
+        template_name = template_sel['name'] if template_sel else ''
+
+        date_prop = props.get('建立日期', {}).get('date')
+        date_str = date_prop['start'] if date_prop else ''
+
+        engagement_arr = props.get('模板ID', {}).get('rich_text', [])
+        engagement = engagement_arr[0]['plain_text'] if engagement_arr else ''
+
+        account_arr = props.get('帳號', {}).get('rich_text', [])
+        author = account_arr[0]['plain_text'] if account_arr else (title.split(' — ')[0] if ' — ' in title else title)
+
+        source_sel = props.get('來源', {}).get('select')
+        source_type = source_sel['name'] if source_sel else ('爆款牆' if '爆款牆' in template_name else ('AI爬文' if template_name else '爆文拆解'))
+
+        if source_filter and source_filter not in source_type and source_filter != author:
+            continue
+
+        blocks_result = notion_get(f'blocks/{page["id"]}/children')
+        body_blocks = []
+        if not blocks_result.get('error'):
+            for blk in blocks_result.get('results', []):
+                btype = blk.get('type', '')
+                content = ''
+                block_data = blk.get(btype, {})
+                if 'rich_text' in block_data:
+                    content = ''.join(t.get('plain_text', '') for t in block_data['rich_text'])
+                elif 'text' in block_data:
+                    content = ''.join(t.get('plain_text', '') for t in block_data['text'])
+                body_blocks.append({'type': btype, 'content': content})
+
+        level_sel = props.get('爆紅程度', {}).get('select')
+        level = level_sel['name'] if level_sel else ''
+
+        items.append({
+            'id': page['id'],
+            'title': title,
+            'author': author,
+            'pillar': pillar,
+            'templateName': template_name,
+            'date': date_str,
+            'engagement': engagement,
+            'engagementLevel': level,
+            'source': source_type,
+            'url': page.get('url', ''),
+            'body': body_blocks,
+        })
+
+    return jsonify({
+        'items': items,
+        'has_more': result.get('has_more', False),
+        'next_cursor': result.get('next_cursor', ''),
+    })
+
+
+# ─── Threads URL 爬取 API ───
+
+@app.route('/api/crawl-thread', methods=['POST'])
+def crawl_thread():
+    """爬取單一 Threads 貼文 URL"""
+    data = request.json or {}
+    url = data.get('url', '').strip()
+    if not url:
+        return jsonify({'error': '請提供 Threads URL'}), 400
+
+    try:
+        from threads_crawler import crawl_user_posts
+        import re
+        username_match = re.search(r'threads\.net/@([^/]+)', url)
+        if not username_match:
+            return jsonify({'error': '無法辨識 Threads 帳號'}), 400
+        username = username_match.group(1)
+        posts = crawl_user_posts(username, max_posts=5)
+        if not posts:
+            return jsonify({'error': '無法爬取貼文，可能是帳號不存在或連線問題'}), 404
+        post_id_match = re.search(r'/post/([A-Za-z0-9_-]+)', url)
+        if post_id_match:
+            target_id = post_id_match.group(1)
+            for p in posts:
+                if target_id in p.get('url', ''):
+                    return jsonify({
+                        'text': p.get('text', ''),
+                        'author': f"@{username}",
+                        'likes': p.get('likes', 0),
+                        'comments': p.get('comments', 0),
+                        'url': p.get('url', url),
+                    })
+        best = max(posts, key=lambda p: p.get('likes', 0)) if posts else posts[0]
+        return jsonify({
+            'text': best.get('text', ''),
+            'author': f"@{username}",
+            'likes': best.get('likes', 0),
+            'comments': best.get('comments', 0),
+            'url': best.get('url', url),
+        })
+    except ImportError:
+        return jsonify({'error': 'Threads 爬蟲未安裝'}), 500
+    except Exception as e:
+        return jsonify({'error': f'爬取失敗：{str(e)}'}), 500
+
+
+# ─── Discord 爆文通知 ───
+
+def _notify_discord_viral(analysis_title, template_name, pillar, page_url=''):
+    """分析完成後通知 Discord"""
+    webhook_url = os.environ.get('DISCORD_WEBHOOK_URL', '')
+    if not webhook_url:
+        return
+    try:
+        msg = f"📊 **爆文分析完成**\n"
+        msg += f"📌 {analysis_title}\n"
+        if template_name:
+            msg += f"🏷️ 模板：{template_name}\n"
+        msg += f"🎯 支柱：{pillar}\n"
+        if page_url:
+            msg += f"📎 [Notion 頁面]({page_url})"
+        payload = json.dumps({
+            'content': msg,
+            'username': 'Insight Lab 爆文系統',
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            webhook_url, data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        print(f"⚠️ Discord 通知失敗: {e}", flush=True)
 
 
 def _ocr_image(base64_image):
@@ -1419,6 +1910,8 @@ def carousel_render():
     pages = data.get('pages', [])
     topic = data.get('topic', 'carousel')
     session_id = data.get('session_id', '')
+    template = data.get('template', 'editorial_serif_wash')
+    palette = data.get('palette', '')
 
     if not pages:
         session = _carousel_sessions.get(session_id, {})
@@ -1436,12 +1929,16 @@ def carousel_render():
         output_dir = os.path.join(PROJECT_ROOT, 'output', 'web-carousel', session_id or 'temp')
         os.makedirs(output_dir, exist_ok=True)
 
+        if palette:
+            for pg in pages:
+                pg['palette'] = palette
+
         # 執行渲染
         loop = asyncio.new_event_loop()
         generated = loop.run_until_complete(render_carousel_html(
             pages=pages,
             topic=topic,
-            template='editorial_serif_wash',
+            template=template or 'editorial_serif_wash',
             output_dir=output_dir,
             brand_mark="JHEN'S INSIGHT LAB",
         ))
@@ -1473,6 +1970,39 @@ def carousel_image(session_id, filename):
     """提供渲染的輪播圖片"""
     img_dir = os.path.join(PROJECT_ROOT, 'output', 'web-carousel', session_id)
     return send_from_directory(img_dir, filename)
+
+
+@app.route('/api/carousel-templates', methods=['GET'])
+def carousel_templates():
+    """列出可用模板 + 色盤"""
+    templates = [
+        {'id': 'editorial_serif_wash', 'name': '渲染水彩風', 'desc': '水彩暈染 + 書法襯線'},
+        {'id': 'editorial_serif', 'name': '經典襯線', 'desc': '乾淨色塊 + 襯線字'},
+        {'id': 'editorial_banner', 'name': '橫幅標題', 'desc': '大標題橫幅設計'},
+        {'id': 'general_light', 'name': '通用淺色', 'desc': '簡潔淺色卡片'},
+    ]
+    palettes = []
+    try:
+        pal_path = os.path.join(PROJECT_ROOT, 'templates', 'carousel', 'editorial_palettes.json')
+        with open(pal_path, 'r', encoding='utf-8') as f:
+            pal_data = json.load(f)
+        for pid, info in pal_data.items():
+            palettes.append({
+                'id': pid,
+                'name': info.get('name', pid),
+                'colors': info.get('colors', [])[:5],
+                'accent': info.get('accent', '#888'),
+            })
+    except Exception:
+        pass
+    layout_types = [
+        {'id': 'cover', 'name': '封面', 'icon': '🎨'},
+        {'id': 'narrative', 'name': '敘述型', 'icon': '📝'},
+        {'id': 'step_flow', 'name': '流程型', 'icon': '🔢'},
+        {'id': 'bazi_compare', 'name': '對比型', 'icon': '⚖️'},
+        {'id': 'closing', 'name': '收尾頁', 'icon': '🎯'},
+    ]
+    return jsonify({'templates': templates, 'palettes': palettes, 'layout_types': layout_types})
 
 
 # ─── 八字命理爆文搜尋 ───

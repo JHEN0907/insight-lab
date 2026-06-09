@@ -48,6 +48,18 @@
           <span class="sidebar-icon">🔍</span>
           <span>爆文拆解</span>
         </a>
+        <a href="#templates" class="sidebar-item" data-page="templates">
+          <span class="sidebar-icon">📚</span>
+          <span>模板庫</span>
+        </a>
+        <a href="#collection" class="sidebar-item" data-page="collection">
+          <span class="sidebar-icon">⭐</span>
+          <span>我的收藏</span>
+        </a>
+        <a href="#notion-collection" class="sidebar-item" data-page="notion-collection">
+          <span class="sidebar-icon">📖</span>
+          <span>爆文收藏</span>
+        </a>
         <a href="#matrix" class="sidebar-item" data-page="matrix">
           <span class="sidebar-icon">📐</span>
           <span>內容矩陣</span>
@@ -103,21 +115,30 @@
           <p class="page-desc">貼上熱門貼文，AI 幫你拆解爆文密碼、挖掘受眾痛點、<br>產出一份你的領域可直接套用的格式靈感。</p>
         </div>
 
+        <!-- Pillar Selector -->
+        <div class="pillar-selector" id="viralPillarSelector">
+          <span class="pillar-label">套用領域：</span>
+          <button class="pill active" data-pillar="八字">八字</button>
+          <button class="pill" data-pillar="塔羅">塔羅</button>
+          <button class="pill" data-pillar="覺察">覺察</button>
+        </div>
+
         <!-- Input Area (unified: text + image attach) -->
         <div class="tool-card">
           <div class="tool-card-header">
             <span class="tool-card-icon">📋</span>
-            <span>貼上你收集至少 1 篇 THREADS 貼文</span>
+            <span>貼上貼文、上傳截圖、或貼 Threads 連結</span>
           </div>
-          <textarea class="tool-textarea" id="viralInput" placeholder="將多則 Threads 貼文複製貼上這裡⋯
+          <textarea class="tool-textarea" id="viralInput" placeholder="三種輸入方式：
 
-最佳格式（分析更精準）：
+1. 直接貼上 Threads 貼文內容
+2. 上傳截圖（AI 自動辨識文字）
+3. 貼上 Threads 連結（自動爬取）
+
+最佳格式：
 • 帳號名稱（@xxx）
 • 互動數據（❤️ 按讚 💬 留言 🔄 轉發）
-• 貼文內文
-• 每則貼文間用空行分隔
-
-💡 也可以直接上傳截圖，AI 會自動辨識圖中文字"></textarea>
+• 貼文內文"></textarea>
           <!-- Attached image previews (inline, below textarea) -->
           <div class="attach-previews hidden" id="attachPreviews"></div>
           <div class="tool-card-footer">
@@ -254,7 +275,7 @@
         <div class="page-hero">
           <p class="page-subtitle">CAROUSEL DESIGNER</p>
           <h1 class="page-title">脆文轉 <span class="text-accent">IG 輪播</span></h1>
-          <p class="page-desc">貼上 Threads 文案，三階段生成 IG 輪播圖。</p>
+          <p class="page-desc">貼上 Threads 文案，AI 拆頁後可即時編輯每頁內容、選擇模板與色盤。</p>
         </div>
         <div class="tool-card">
           <div class="tool-card-header">
@@ -262,31 +283,39 @@
             <span>貼上 Threads 文案</span>
           </div>
           <textarea class="tool-textarea" id="carouselInput" placeholder="將 Threads 文案貼上這裡⋯
-系統會自動拆成 10 頁輪播"></textarea>
+系統會自動拆頁 + 版面分析"></textarea>
           <div class="tool-card-footer">
-            <span class="footer-hint">Phase 1 封面 → Phase 2 純文字 → Phase 3 AI 插圖</span>
+            <span class="footer-hint">AI 拆頁 → 編輯調整 → 一鍵渲染</span>
             <button class="btn btn-primary" id="generateCarouselBtn">
               <span class="btn-icon">📱</span>
-              <span>生成輪播</span>
+              <span>AI 拆頁</span>
             </button>
           </div>
         </div>
-        <div class="phase-steps">
-          <div class="phase-step">
-            <span class="phase-num">1</span>
-            <span class="phase-label">封面確認</span>
+
+        <!-- WYSIWYG Editor Area (hidden until AI splits) -->
+        <div class="hidden" id="carouselEditorArea">
+          <div class="carousel-editor-toolbar">
+            <label>模板</label>
+            <select id="carouselTemplateSelect"></select>
+            <label>色盤</label>
+            <select id="carouselPaletteSelect"></select>
+            <div class="palette-preview-row" id="palettePreviewDots"></div>
           </div>
-          <div class="phase-arrow">&rarr;</div>
-          <div class="phase-step">
-            <span class="phase-num">2</span>
-            <span class="phase-label">純文字渲染</span>
-          </div>
-          <div class="phase-arrow">&rarr;</div>
-          <div class="phase-step">
-            <span class="phase-num">3</span>
-            <span class="phase-label">AI 插圖（選填）</span>
+          <div class="carousel-page-list" id="carouselPageList"></div>
+          <button class="carousel-add-page" id="carouselAddPageBtn">+ 新增頁面</button>
+          <div class="carousel-render-bar">
+            <span class="page-count" id="carouselPageCount"></span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline" id="carouselResetBtn">重新拆頁</button>
+              <button class="btn btn-primary" id="carouselRenderBtn">
+                <span class="btn-icon">🖼️</span>
+                <span>渲染輪播圖</span>
+              </button>
+            </div>
           </div>
         </div>
+
         <div class="results-area hidden" id="carouselResults"></div>
       </div>
 
@@ -559,6 +588,69 @@ AI 會分析為什麼表現好或差，並給出改善建議。"></textarea>
           </div>
           <div class="results-area hidden" id="styleLearningResults"></div>
         </div>
+      </div>
+
+      <!-- Page: Template Library -->
+      <div class="page" id="page-templates">
+        <div class="page-hero">
+          <p class="page-subtitle">VIRAL TEMPLATE LIBRARY</p>
+          <h1 class="page-title">爆文<span class="text-accent">模板庫</span></h1>
+          <p class="page-desc">16 個經過驗證的高互動寫法模板，附帶真實數據和套用範例</p>
+        </div>
+        <div class="template-filters">
+          <button class="pill active" data-tpl-filter="all">全部</button>
+          <button class="pill" data-tpl-filter="八字">八字</button>
+          <button class="pill" data-tpl-filter="塔羅">塔羅</button>
+          <button class="pill" data-tpl-filter="⭐⭐⭐">高效果</button>
+        </div>
+        <div class="template-grid" id="templateGrid">
+          <div class="loading-state"><p class="loading-text">載入模板庫中...</p></div>
+        </div>
+      </div>
+
+      <!-- Page: My Collection -->
+      <div class="page" id="page-collection">
+        <div class="page-hero">
+          <p class="page-subtitle">MY VIRAL COLLECTION</p>
+          <h1 class="page-title">我的<span class="text-accent">爆文收藏</span></h1>
+          <p class="page-desc">截圖 → 分析 → 收藏，累積你的高流量寫法靈感庫</p>
+        </div>
+        <div class="collection-stats" id="collectionStats">
+          <span class="collection-count">0 篇收藏</span>
+        </div>
+        <div class="collection-list" id="collectionList">
+          <div class="collection-empty">
+            <p>還沒有收藏</p>
+            <p>到「🔍 爆文拆解」分析貼文後，點擊「⭐ 收藏」即可加入</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-notion-collection">
+        <div class="page-hero">
+          <p class="page-subtitle">NOTION VIRAL LIBRARY</p>
+          <h1 class="page-title">📖 Notion <span class="text-accent">爆文收藏庫</span></h1>
+          <p class="page-desc">所有爆文分析同步到 Notion，隨時查閱、套用寫文案</p>
+        </div>
+        <div class="nc-filters" id="ncFilters">
+          <div class="nc-filter-row">
+            <label>來源：</label>
+            <button class="nc-filter-btn active" data-source="">全部</button>
+            <button class="nc-filter-btn" data-source="爆文拆解">爆文拆解</button>
+            <button class="nc-filter-btn" data-source="爆款牆">爆款牆</button>
+            <button class="nc-filter-btn" data-source="AI爬文">AI 爬文</button>
+          </div>
+          <div class="nc-filter-row">
+            <label>帳號：</label>
+            <select id="ncAccountFilter" class="nc-account-select">
+              <option value="">全部帳號</option>
+            </select>
+          </div>
+        </div>
+        <div class="nc-stats" id="ncStats">
+          <span class="nc-count">載入中...</span>
+        </div>
+        <div class="nc-list" id="ncList"></div>
       </div>
 
     </main>
