@@ -628,27 +628,24 @@ AI 會分析為什麼表現好或差，並給出改善建議。"></textarea>
 
       <div class="page" id="page-notion-collection">
         <div class="page-hero">
-          <p class="page-subtitle">NOTION VIRAL LIBRARY</p>
-          <h1 class="page-title">📖 Notion <span class="text-accent">爆文收藏庫</span></h1>
-          <p class="page-desc">所有爆文分析同步到 Notion，隨時查閱、套用寫文案</p>
+          <p class="page-subtitle">VIRAL COLLECTION LIBRARY</p>
+          <h1 class="page-title"><span class="text-accent">爆文收藏庫</span></h1>
+          <p class="page-desc">爆文拆解 + 爆款牆收藏同步到 Notion，隨時查閱、一鍵套用寫文案</p>
         </div>
-        <div class="nc-filters" id="ncFilters">
-          <div class="nc-filter-row">
-            <label>來源：</label>
-            <button class="nc-filter-btn active" data-source="">全部</button>
-            <button class="nc-filter-btn" data-source="爆文拆解">爆文拆解</button>
-            <button class="nc-filter-btn" data-source="爆款牆">爆款牆</button>
-            <button class="nc-filter-btn" data-source="AI爬文">AI 爬文</button>
-          </div>
-          <div class="nc-filter-row">
-            <label>帳號：</label>
-            <select id="ncAccountFilter" class="nc-account-select">
-              <option value="">全部帳號</option>
-            </select>
-          </div>
+        <div class="nc-toolbar" id="ncFilters">
+          <span class="nc-toolbar-label">來源</span>
+          <button class="nc-filter-btn active" data-source="">全部</button>
+          <button class="nc-filter-btn" data-source="爆文拆解">🔍 爆文拆解</button>
+          <button class="nc-filter-btn" data-source="爆款牆">🔥 爆款牆</button>
+          <button class="nc-filter-btn" data-source="AI爬文">🤖 AI 爬文</button>
+          <span class="nc-toolbar-divider"></span>
+          <select id="ncAccountFilter" class="nc-account-select">
+            <option value="">全部帳號</option>
+          </select>
         </div>
         <div class="nc-stats" id="ncStats">
           <span class="nc-count">載入中...</span>
+          <button class="nc-refresh-btn" onclick="renderNotionCollectionPage()">🔄 重新載入</button>
         </div>
         <div class="nc-list" id="ncList"></div>
       </div>

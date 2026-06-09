@@ -4,7 +4,7 @@
  */
 
 const API_BASE = window.location.protocol === 'file:'
-  ? 'http://localhost:5050'
+  ? 'http://localhost:8080'
   : window.location.origin;
 
 async function apiCall(endpoint, body, method) {
@@ -1038,8 +1038,10 @@ window.ncUseForCopy = function(id) {
 
 document.addEventListener('click', function(e) {
   if (e.target.classList.contains('nc-filter-btn')) {
-    var row = e.target.closest('.nc-filter-row');
-    row.querySelectorAll('.nc-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    var toolbar = e.target.closest('.nc-toolbar');
+    if (toolbar) {
+      toolbar.querySelectorAll('.nc-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    }
     e.target.classList.add('active');
     _ncSourceFilter = e.target.dataset.source || '';
     _renderNcList();

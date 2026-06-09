@@ -1585,73 +1585,91 @@ body {
 .coll-delete-btn:hover { background: #fdecea; }
 
 /* ── Notion Collection Page ── */
-.nc-filters { margin-bottom: 16px; }
-.nc-filter-row {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 8px; flex-wrap: wrap;
+.nc-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 20px;
+  padding: 14px 18px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
-.nc-filter-row label {
-  font-size: 12px; color: var(--text-light); min-width: 40px;
+.nc-toolbar-label {
+  font-size: 13px; font-weight: 600; color: var(--text-light);
 }
 .nc-filter-btn {
-  font-size: 12px; padding: 4px 12px; border-radius: 20px;
-  border: 1px solid var(--border); background: var(--card);
-  color: var(--text-light); cursor: pointer; transition: all .2s;
+  font-size: 13px; padding: 8px 18px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-family: inherit; font-weight: 500;
+  color: var(--text-light); cursor: pointer; transition: all .15s;
 }
+.nc-filter-btn:hover { border-color: var(--primary); color: var(--primary); }
 .nc-filter-btn.active {
   background: var(--primary); color: #fff; border-color: var(--primary);
 }
 .nc-account-select {
-  font-size: 12px; padding: 4px 8px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--card);
-  color: var(--text);
+  font-size: 13px; padding: 8px 14px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  color: var(--text); font-family: inherit; cursor: pointer;
 }
-.nc-stats { margin-bottom: 12px; font-size: 14px; color: var(--text-light); }
+.nc-toolbar-divider {
+  width: 1px; height: 24px; background: var(--border);
+}
+.nc-stats {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; font-size: 14px; color: var(--text-light);
+}
 .nc-count { font-weight: 600; }
+.nc-refresh-btn {
+  font-size: 13px; padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--card);
+  color: var(--text-light); cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.nc-refresh-btn:hover { border-color: var(--primary); color: var(--primary); }
 .nc-list { display: flex; flex-direction: column; gap: 12px; }
 
 .nc-card {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
+  border-radius: var(--radius); padding: 18px;
   cursor: pointer; transition: all .2s;
 }
-.nc-card:hover { border-color: var(--primary); }
+.nc-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.04); }
 .nc-card-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.nc-card-title { font-size: 14px; font-weight: 600; color: var(--text); }
-.nc-card-date { font-size: 11px; color: var(--text-light); }
+.nc-card-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.nc-card-date { font-size: 12px; color: var(--text-light); }
 .nc-card-meta {
   display: flex; gap: 8px; font-size: 12px; color: var(--text-light);
-  margin-bottom: 4px; flex-wrap: wrap;
+  margin-bottom: 4px; flex-wrap: wrap; align-items: center;
 }
 .nc-tag {
-  padding: 2px 8px; border-radius: 10px; font-size: 11px;
+  padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
   background: var(--bg-alt); color: var(--text-light);
 }
 .nc-tag.source-爆文拆解 { background: #fff3e0; color: #e65100; }
 .nc-tag.source-爆款牆 { background: #e8f5e9; color: #2e7d32; }
 .nc-tag.source-AI爬文 { background: #e3f2fd; color: #1565c0; }
 .nc-card-body {
-  display: none; margin-top: 12px; padding-top: 12px;
+  display: none; margin-top: 14px; padding-top: 14px;
   border-top: 1px solid var(--border);
 }
 .nc-card.expanded .nc-card-body { display: block; }
 .nc-section {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .nc-section-title {
-  font-size: 12px; font-weight: 600; color: var(--primary);
-  margin-bottom: 4px;
+  font-size: 13px; font-weight: 600; color: var(--primary);
+  margin-bottom: 6px;
 }
 .nc-section-content {
-  background: var(--bg-alt); padding: 10px; border-radius: 6px;
-  font-size: 13px; line-height: 1.6; white-space: pre-wrap;
+  background: var(--bg-alt); padding: 12px 14px; border-radius: 8px;
+  font-size: 13px; line-height: 1.7; white-space: pre-wrap;
 }
 .nc-card-actions {
-  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
 }
+.nc-card-actions .btn { font-size: 13px; padding: 8px 16px; }
 
 /* ── Responsive: Sample Actions ── */
 @media (max-width: 768px) {
