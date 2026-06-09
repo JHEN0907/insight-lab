@@ -176,10 +176,10 @@ CLAUDE_PATH = '/Users/Sherry/.local/bin/claude'
 GOOGLE_AI_API_KEY = os.environ.get('GOOGLE_AI_API_KEY', '')
 
 def run_claude(prompt, timeout=600):
-    """雙引擎：Claude CLI（本機優先）→ Gemini（雲端備援）
+    """三引擎：Claude CLI（本機）→ Anthropic API（雲端預設）→ Gemini（備援）
     所有 20+ 個呼叫點不需要修改，函數簽名不變"""
 
-    # 1. 先試 Claude CLI（本機品質最好）
+    # 1. 先試 Claude CLI（本機品質最好，有工具能力）
     if os.path.exists(CLAUDE_PATH):
         try:
             result = subprocess.run(
@@ -203,24 +203,7 @@ def run_claude(prompt, timeout=600):
         except Exception as e:
             print(f"⚠️ Claude CLI error: {e}", flush=True)
 
-    # 2. Gemini fallback（雲端備援，免費）
-    api_key = GOOGLE_AI_API_KEY
-    if api_key:
-        try:
-            import google.genai as genai
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt + '\n\n⚠️ 所有文字必須使用繁體中文，不可出現任何簡體字。',
-            )
-            text = response.text.strip() if response.text else None
-            if text:
-                print("🟡 使用 Gemini 備援", flush=True)
-                return text
-        except Exception as e:
-            print(f"⚠️ Gemini error: {e}", flush=True)
-
-    # 3. Anthropic API fallback（如果有 key）
+    # 2. Anthropic API（雲端預設，品質最好）
     if ANTHROPIC_API_KEY:
         try:
             req_data = json.dumps({
@@ -240,9 +223,29 @@ def run_claude(prompt, timeout=600):
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 result = json.loads(resp.read().decode('utf-8'))
                 texts = [b.get('text', '') for b in result.get('content', []) if b.get('type') == 'text']
-                return '\n'.join(texts).strip() or None
+                text = '\n'.join(texts).strip()
+                if text:
+                    print("🟢 使用 Anthropic API (Claude)", flush=True)
+                    return text
         except Exception as e:
             print(f"⚠️ Anthropic API error: {e}", flush=True)
+
+    # 3. Gemini fallback（免費備援）
+    api_key = GOOGLE_AI_API_KEY
+    if api_key:
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt + '\n\n⚠️ 所有文字必須使用繁體中文，不可出現任何簡體字。',
+            )
+            text = response.text.strip() if response.text else None
+            if text:
+                print("🟡 使用 Gemini 備援", flush=True)
+                return text
+        except Exception as e:
+            print(f"⚠️ Gemini error: {e}", flush=True)
 
     return None
 
@@ -266,7 +269,7 @@ def health():
     cli_ok = os.path.exists(CLAUDE_PATH)
     return jsonify({
         'status': 'ok',
-        'engine': 'claude-cli' if cli_ok else ('anthropic-api' if ANTHROPIC_API_KEY else 'none'),
+        'engine': 'claude-cli' if cli_ok else ('claude-api' if ANTHROPIC_API_KEY else ('gemini' if GOOGLE_AI_API_KEY else 'none')),
         'cli': cli_ok,
         'api_key': bool(ANTHROPIC_API_KEY),
         'notion': bool(NOTION_TOKEN),
