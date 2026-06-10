@@ -77,7 +77,6 @@ function switchPage(pageId) {
 
   // Lazy-load pages
   if (pageId === 'templates' && typeof loadTemplatePage === 'function') loadTemplatePage();
-  if (pageId === 'collection' && typeof renderCollectionPage === 'function') renderCollectionPage();
   if (pageId === 'notion-collection' && typeof renderNotionCollectionPage === 'function') renderNotionCollectionPage();
 }
 
