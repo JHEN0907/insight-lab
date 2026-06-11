@@ -194,31 +194,63 @@ def web_search(query, max_results=5):
         return []
 
 
+def _extract_claims(text):
+    """從文案中提取需要查核的具體宣稱：引言、書名、人名、概念"""
+    import re
+    claims = []
+    # 1. 「...」引言 + 前面的人名
+    for m in re.finditer(r'([一-鿿]{2,6})\s*[說說道表示指出][\s：:]*[「「](.+?)[」」]', text):
+        person, quote = m.group(1), m.group(2)
+        claims.append({'type': '引言', 'query': f'{person} {quote[:15]}', 'label': f'{person}：「{quote[:20]}…」'})
+    # 2. 《...》書名
+    for m in re.finditer(r'[《《](.+?)[》》]', text):
+        book = m.group(1)
+        claims.append({'type': '書名', 'query': f'《{book}》', 'label': f'《{book}》'})
+    # 3. 具體概念（命理/科學術語）
+    concept_patterns = [
+        '神經可塑性', '功過格', '十神', '正官', '偏印', '七殺', '食神',
+        '正財', '偏財', '傷官', '比肩', '劫財', '正印',
+        '天干地支', '五行', '命盤', '日柱', '夫妻宮',
+        '多巴胺', '血清素', '杏仁核', '前額葉', '海馬迴',
+    ]
+    for c in concept_patterns:
+        if c in text:
+            claims.append({'type': '概念', 'query': f'{c} 定義 意思', 'label': c})
+    # 去重
+    seen = set()
+    unique = []
+    for c in claims:
+        if c['query'] not in seen:
+            seen.add(c['query'])
+            unique.append(c)
+    return unique
+
+
 def search_and_verify(topic, copy_text=''):
-    """對文案內容做網頁事實查核，回傳 {sources: [...], context: str}"""
-    queries = []
-    if topic:
-        queries.append(topic)
-    keywords = []
-    for kw in ['八字', '十神', '命盤', '五行', '天干', '地支', '塔羅',
-                '神經可塑性', '心理學', '了凡四訓']:
-        if kw in (copy_text or '') or kw in (topic or ''):
-            keywords.append(kw)
-    if keywords:
-        queries.append(' '.join(keywords[:3]) + ' 正確性')
-    if not queries:
-        queries.append(topic or '命理 八字')
+    """對文案中提到的具體內容做網頁事實查核"""
+    claims = _extract_claims(copy_text or topic or '')
+
+    if not claims and topic:
+        claims = [{'type': '主題', 'query': topic, 'label': topic}]
 
     all_results = []
     seen_urls = set()
-    for q in queries[:3]:
-        for r in web_search(q, max_results=3):
+    for claim in claims[:5]:
+        results = web_search(claim['query'], max_results=2)
+        for r in results:
             if r['url'] not in seen_urls:
                 seen_urls.add(r['url'])
-                all_results.append(r)
+                all_results.append({
+                    **r,
+                    'verify_type': claim['type'],
+                    'verify_label': claim['label'],
+                })
 
-    sources = [f"{r['title']} — {r['url']}" for r in all_results]
-    context = '\n'.join([f"- {r['title']}: {r['snippet']}" for r in all_results])
+    sources = [f"[{r['verify_type']}] {r['verify_label']} → {r['title']} — {r['url']}" for r in all_results]
+    context = '\n'.join([
+        f"【查核：{r['verify_label']}】{r['title']}: {r['snippet']}"
+        for r in all_results
+    ])
     return {'sources': sources, 'context': context}
 
 def run_claude(prompt, timeout=600):
