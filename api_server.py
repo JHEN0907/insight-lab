@@ -175,6 +175,52 @@ C（CTA 結尾）：餘韻金句/自然問句/懸念式/行動呼籲
 CLAUDE_PATH = '/Users/Sherry/.local/bin/claude'
 GOOGLE_AI_API_KEY = os.environ.get('GOOGLE_AI_API_KEY', '')
 
+
+def web_search(query, max_results=5):
+    """用 DuckDuckGo 搜尋，回傳 [{title, url, snippet}]"""
+    try:
+        from ddgs import DDGS
+        ddgs = DDGS()
+        results = []
+        for r in ddgs.text(query, max_results=max_results):
+            results.append({
+                'title': r.get('title', '').replace('\n', ' '),
+                'url': r.get('href', ''),
+                'snippet': r.get('body', '').replace('\n', ' '),
+            })
+        return results
+    except Exception as e:
+        print(f"⚠️ DuckDuckGo 搜尋失敗: {e}", flush=True)
+        return []
+
+
+def search_and_verify(topic, copy_text=''):
+    """對文案內容做網頁事實查核，回傳 {sources: [...], context: str}"""
+    queries = []
+    if topic:
+        queries.append(topic)
+    keywords = []
+    for kw in ['八字', '十神', '命盤', '五行', '天干', '地支', '塔羅',
+                '神經可塑性', '心理學', '了凡四訓']:
+        if kw in (copy_text or '') or kw in (topic or ''):
+            keywords.append(kw)
+    if keywords:
+        queries.append(' '.join(keywords[:3]) + ' 正確性')
+    if not queries:
+        queries.append(topic or '命理 八字')
+
+    all_results = []
+    seen_urls = set()
+    for q in queries[:3]:
+        for r in web_search(q, max_results=3):
+            if r['url'] not in seen_urls:
+                seen_urls.add(r['url'])
+                all_results.append(r)
+
+    sources = [f"{r['title']} — {r['url']}" for r in all_results]
+    context = '\n'.join([f"- {r['title']}: {r['snippet']}" for r in all_results])
+    return {'sources': sources, 'context': context}
+
 def run_claude(prompt, timeout=600):
     """三引擎：Claude CLI（本機）→ Anthropic API（雲端預設）→ Gemini（備援）
     所有 20+ 個呼叫點不需要修改，函數簽名不變"""
@@ -993,6 +1039,10 @@ def generate_copy():
 
     attachment_block = _build_attachment_block(attachments)
 
+    verify = search_and_verify(topic)
+    search_context = verify['context']
+    real_sources = verify['sources']
+
     prompt = f"""你是 @jhen_insightlab 的文案寫手。請根據以下設定生成一篇 Threads 文案。
 
 {BRAND_CONTEXT}
@@ -1002,20 +1052,13 @@ def generate_copy():
 - 發文形式：{format_type}
 - 主題/關鍵字：{topic or '（自由發揮）'}
 {attachment_block}
-## Step 1：多平台搜尋研究（必做）
-請用 WebSearch 搜尋以下內容，確保文案的正確性和爆文潛力：
-1. 搜尋「{topic} site:threads.net」— Threads 上的高互動貼文（2-3 篇）
-2. 搜尋「{topic} 小紅書」— 小紅書相關熱門內容的寫法和切入角度
-3. 搜尋「{topic} IG」— IG 相關討論
-4. 分析這些熱門內容的 Hook 手法、段落節奏、轉折技巧、互動設計
-5. 確認文案中涉及的事實/知識是否正確（特別是命理知識）
-{'6. 仔細閱讀用戶提供的所有素材，統整核心觀點和具體例子，結合搜尋結果生成文案。' if attachments else ''}
+## 網頁搜尋結果（伺服器已搜尋，請參考以下資料確保正確性）
+{search_context if search_context else '（無搜尋結果）'}
 
-## Step 2：讀取品牌規範
-- skills/writing-technique/SKILL.md（寫作技巧 + Hook 公式 + AI味檢測）
-- brand/brand_voice.md（品牌語氣規則）
-- brand/sample_posts/threads_samples.md（範例文）
-- 如果主題涉及八字或十神，用 WebSearch 搜尋 fatemaster.ai/zh-Hant/guides/shishen 驗證知識正確性
+## 寫作參考
+{'仔細閱讀用戶提供的所有素材，統整核心觀點和具體例子，結合搜尋結果生成文案。' if attachments else ''}
+- 分析搜尋結果中的 Hook 手法、段落節奏、轉折技巧
+- 確認文案中涉及的事實/知識是否正確（特別是命理知識）
 
 ## Step 3：{'統整素材 + ' if attachments else ''}生成文案
 {'⚠️ 重要：你必須保留用戶素材中的核心觀點、具體例子和個人經驗，不可丟棄任何細節。' if attachments else ''}
@@ -1035,7 +1078,6 @@ def generate_copy():
   "copy": "完整文案（用 \\n 換行）",
   "techniques_used": ["技巧1", "技巧2"],
   "hook_type": "使用的 Hook 類型",
-  "sources": ["參考來源1", "參考來源2"]
 }}
 ```
 ⚠️ 所有輸出文字必須是繁體中文（簡體字內容必須轉換成繁體）。禁止任何簡體字。只回覆 JSON。"""
@@ -1053,9 +1095,11 @@ def generate_copy():
         clean = clean.strip()
         if clean.startswith('json'):
             clean = clean[4:].strip()
-        return jsonify(json.loads(clean))
+        parsed = json.loads(clean)
+        parsed['sources'] = real_sources
+        return jsonify(parsed)
     except json.JSONDecodeError:
-        return jsonify({'copy': result, 'techniques_used': [], 'hook_type': '—'})
+        return jsonify({'copy': result, 'techniques_used': [], 'hook_type': '—', 'sources': real_sources})
 
 
 # ─── 流量診斷 API ───
@@ -1317,6 +1361,10 @@ def review_copy():
     if not copy:
         return jsonify({'error': '請提供文案內容'}), 400
 
+    verify = search_and_verify(topic, copy)
+    search_context = verify['context']
+    real_sources = verify['sources']
+
     prompt = f"""你是 @jhen_insightlab 的文案查核助手。請對以下文案做最終查核。
 
 {BRAND_CONTEXT}
@@ -1326,12 +1374,15 @@ def review_copy():
 文案：
 {copy}
 
+## 網頁搜尋結果（伺服器已搜尋，請依據以下資料查核文案正確性）
+{search_context if search_context else '（無搜尋結果）'}
+
 查核項目：
-1. 事實查核 — 如果涉及八字/十神知識，請用 WebSearch 搜尋 https://www.fatemaster.ai/zh-Hant/guides/shishen 驗證十神定義和特質是否正確。同時搜尋其他命理網站交叉驗證。有無混用紫微斗數術語？有無武斷定論？
+1. 事實查核 — 依據上方網頁搜尋結果，比對文案中的知識/事實是否正確。如涉及八字/十神，檢查定義是否準確。有無混用紫微斗數術語？有無武斷定論？
 2. AI 味檢測 — 開頭是否陳述句？有無模板轉折詞？有無具體細節？有無明確立場？
 3. 亮點檢查 — 最亮句是否夠前面？結尾是否有力？有無觀點翻轉？
 4. 品牌風格 — 語氣像朋友聊天？有無說教口吻？字數是否適中？
-5. 內容正確性 — 用 WebSearch 搜尋文案中提到的概念/事實，確認是否正確。
+5. 內容正確性 — 依據搜尋結果確認文案中每個具體宣稱是否有網頁資料佐證。
 
 用 JSON 回覆：
 ```json
@@ -1340,7 +1391,8 @@ def review_copy():
   "warnings": ["建議調整1（含原因和改法）"],
   "errors": ["必須修正1（含原因和改法）"],
   "highlights": ["文案亮點1"],
-  "suggestion": "修正後的完整文案（如全部通過則為空字串）"
+  "suggestion": "修正後的完整文案（如全部通過則為空字串）",
+  "sources": ["查核參考來源"]
 }}
 ```
 ⚠️ 所有輸出文字必須是繁體中文（簡體字內容必須轉換成繁體）。禁止任何簡體字。只回覆 JSON。"""
@@ -1358,9 +1410,11 @@ def review_copy():
         clean = clean.strip()
         if clean.startswith('json'):
             clean = clean[4:].strip()
-        return jsonify(json.loads(clean))
+        parsed = json.loads(clean)
+        parsed['sources'] = real_sources
+        return jsonify(parsed)
     except json.JSONDecodeError:
-        return jsonify({'passed': [], 'warnings': [], 'errors': [], 'highlights': [], 'suggestion': '', 'raw': result})
+        return jsonify({'passed': [], 'warnings': [], 'errors': [], 'highlights': [], 'suggestion': '', 'sources': real_sources, 'raw': result})
 
 
 # ─── Notion: 靈感庫 CRUD ───
@@ -2345,11 +2399,18 @@ def rewrite_original():
     if not original:
         return jsonify({'error': '請輸入原稿'}), 400
 
+    verify = search_and_verify(pillar + ' ' + original[:50])
+    search_context = verify['context']
+    real_sources = verify['sources']
+
     prompt = f"""你是 @jhen_insightlab 的文案改寫助手。
 
 {BRAND_CONTEXT}
 
 以下是用戶的原始想法。請用寫作技巧重新改寫成完整 Threads 文案。
+
+## 網頁搜尋結果（伺服器已搜尋，請參考確保正確性）
+{search_context if search_context else '（無搜尋結果）'}
 
 重要規則：
 1. 保留用戶所有具體例子和個人感受
@@ -2363,8 +2424,6 @@ def rewrite_original():
 2. **保留空行**：段落之間用空行分隔，保留原文的空行結構
 3. **emoji 整篇最多 2 個**
 4. 不要把多個短句合併成一個長句
-
-請先讀取 skills/writing-technique/SKILL.md 和 brand/brand_voice.md
 
 原始想法：
 {original}
@@ -2385,9 +2444,11 @@ def rewrite_original():
         if clean.endswith('```'): clean = clean[:-3]
         clean = clean.strip()
         if clean.startswith('json'): clean = clean[4:].strip()
-        return jsonify(json.loads(clean))
+        parsed = json.loads(clean)
+        parsed['sources'] = real_sources
+        return jsonify(parsed)
     except json.JSONDecodeError:
-        return jsonify({'copy': result, 'techniques_used': [], 'hook_type': ''})
+        return jsonify({'copy': result, 'techniques_used': [], 'hook_type': '', 'sources': real_sources})
 
 
 @app.route('/api/refine-original', methods=['POST'])

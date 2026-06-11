@@ -5,3 +5,4 @@ playwright==1.52.0
 jinja2==3.1.6
 google-genai>=1.0.0
 apscheduler>=3.10.0
+ddgs>=9.0.0
