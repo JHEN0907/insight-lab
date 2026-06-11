@@ -2183,13 +2183,13 @@ function renderCopyResult(copy, techniques, hookType, pillar, format, resultsEl,
       <summary class="collapsible-header">
         <span class="collapsible-icon">\u25b6</span>
         <span class="status-pass"><span class="status-dot"></span> \u67e5\u6838\u4f86\u6e90</span>
-        <span class="flow-check-brief">${sources.length ? sources.length + ' \u7b46\u641c\u5c0b\u7d50\u679c' : '\u5167\u90e8\u898f\u7bc4'}</span>
+        <span class="flow-check-brief">${sources.length ? sources.length + ' \u7b46\u7db2\u9801\u641c\u5c0b' : '\u672a\u9032\u884c\u7db2\u9801\u641c\u5c0b'}</span>
       </summary>
       <div class="collapsible-body">
-        <div class="check-item"><span class="check-icon check-icon-pass">\u2713</span><span>brand/brand_voice.md\uff08\u54c1\u724c\u8a9e\u6c23\uff09</span></div>
-        <div class="check-item"><span class="check-icon check-icon-pass">\u2713</span><span>skills/writing-technique/SKILL.md\uff08\u5beb\u4f5c\u6280\u5de7\uff09</span></div>
         ${hookType ? '<div class="check-item"><span class="check-icon check-icon-pass">\u2713</span><span>Hook \u985e\u578b\uff1a' + hookType + '</span></div>' : ''}
-        ${sources.length ? '<div class="flow-check-title" style="margin-top:8px;">\ud83d\udd0d \u641c\u5c0b\u53c3\u8003</div>' + sources.map(function(s) { return '<div class="check-item"><span class="check-icon check-icon-pass">\u2713</span><span>' + s + '</span></div>'; }).join('') : ''}
+        ${sources.length
+          ? sources.map(function(s) { return '<div class="check-item"><span class="check-icon check-icon-pass">\u2713</span><span>' + s + '</span></div>'; }).join('')
+          : '<div class="check-item"><span class="check-icon check-icon-warn">!</span><span>AI \u672a\u56de\u50b3\u641c\u5c0b\u4f86\u6e90\uff08\u53ef\u80fd\u4f7f\u7528 Gemini \u5099\u63f4\uff0c\u7121\u6cd5\u641c\u5c0b\u7db2\u9801\uff09</span></div>'}
       </div>
     </details>
 
@@ -2343,6 +2343,8 @@ function renderCopyResult(copy, techniques, hookType, pillar, format, resultsEl,
             + '<div class="result-content" style="white-space:pre-line;margin:8px 0;font-size:13px;">' + result.copy.replace(/\n/g, '<br>') + '</div>'
             + '<div class="copy-actions" style="margin-top:8px;">'
             + '<button class="btn btn-primary use-fix-btn">\u2705 \u63a1\u7528</button>'
+            + '<button class="btn btn-outline edit-fix-btn">\u270f\ufe0f \u8abf\u6574\u539f\u6587</button>'
+            + '<button class="btn btn-outline redo-fix-btn">\ud83d\udd04 \u91cd\u5beb</button>'
             + '<button class="btn btn-outline dismiss-fix-btn">\u274c \u4e0d\u7528</button>'
             + '</div>';
           resultsEl.appendChild(card);
@@ -2351,11 +2353,45 @@ function renderCopyResult(copy, techniques, hookType, pillar, format, resultsEl,
             document.querySelector('.copy-output').innerHTML = currentCopy.replace(/\n/g, '<br>');
             card.innerHTML = '<div class="flow-step-header"><span class="status-pass"><span class="status-dot"></span> \u5df2\u63a1\u7528</span></div>';
           });
+          card.querySelector('.edit-fix-btn').addEventListener('click', function() {
+            var editArea = document.createElement('div');
+            editArea.className = 'flow-step-card';
+            editArea.innerHTML = '<div class="flow-step-header"><span class="flow-step-badge you">\u270f\ufe0f \u624b\u52d5\u8abf\u6574</span></div>'
+              + '<textarea class="tool-textarea" id="editFixArea" style="min-height:180px;">' + result.copy + '</textarea>'
+              + '<div class="copy-actions" style="margin-top:8px;">'
+              + '<button class="btn btn-primary" id="applyEditFix">\u2705 \u5957\u7528</button>'
+              + '<button class="btn btn-outline" id="cancelEditFix">\u53d6\u6d88</button>'
+              + '</div>';
+            card.after(editArea);
+            document.getElementById('applyEditFix').addEventListener('click', function() {
+              currentCopy = document.getElementById('editFixArea').value;
+              document.querySelector('.copy-output').innerHTML = currentCopy.replace(/\n/g, '<br>');
+              editArea.remove();
+              card.innerHTML = '<div class="flow-step-header"><span class="status-pass"><span class="status-dot"></span> \u5df2\u5957\u7528\u8abf\u6574</span></div>';
+            });
+            document.getElementById('cancelEditFix').addEventListener('click', function() { editArea.remove(); });
+          });
+          card.querySelector('.redo-fix-btn').addEventListener('click', function() {
+            card.remove();
+            btn.click();
+          });
           card.querySelector('.dismiss-fix-btn').addEventListener('click', function() {
             card.remove();
           });
+        } else {
+          var errCard = document.createElement('div');
+          errCard.className = 'flow-step-card';
+          errCard.innerHTML = '<div class="flow-step-header"><span class="status-warn"><span class="status-dot"></span> AI \u7121\u6cd5\u751f\u6210\u7d50\u679c\uff0c\u8acb\u7a0d\u5f8c\u91cd\u8a66</span></div>';
+          resultsEl.appendChild(errCard);
+          setTimeout(function() { errCard.remove(); }, 5000);
         }
-      } catch(e) {}
+      } catch(e) {
+        var errCard2 = document.createElement('div');
+        errCard2.className = 'flow-step-card';
+        errCard2.innerHTML = '<div class="flow-step-header"><span class="status-warn"><span class="status-dot"></span> \u26a0\ufe0f API \u932f\u8aa4\uff1a' + (e.message || '\u8acb\u7a0d\u5f8c\u91cd\u8a66') + '</span></div>';
+        resultsEl.appendChild(errCard2);
+        setTimeout(function() { errCard2.remove(); }, 5000);
+      }
       btn.disabled = false;
       btn.innerHTML = origText;
     });
