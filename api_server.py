@@ -267,14 +267,58 @@ def index():
 @app.route('/api/health')
 def health():
     cli_ok = os.path.exists(CLAUDE_PATH)
+    gemini_ok = bool(GOOGLE_AI_API_KEY)
     return jsonify({
         'status': 'ok',
-        'engine': 'claude-cli' if cli_ok else ('claude-api' if ANTHROPIC_API_KEY else ('gemini' if GOOGLE_AI_API_KEY else 'none')),
+        'engine': 'claude-cli' if cli_ok else ('claude-api' if ANTHROPIC_API_KEY else ('gemini' if gemini_ok else 'none')),
         'cli': cli_ok,
         'api_key': bool(ANTHROPIC_API_KEY),
+        'api_key_prefix': ANTHROPIC_API_KEY[:8] + '...' if ANTHROPIC_API_KEY else None,
+        'gemini_key': gemini_ok,
         'notion': bool(NOTION_TOKEN),
-        'web_search': True,  # CLI 有 WebSearch，API 也有 web_search tool
     })
+
+@app.route('/api/debug-engine')
+def debug_engine():
+    """測試 AI 引擎是否正常"""
+    errors = []
+    working = None
+    # Test Anthropic API
+    if ANTHROPIC_API_KEY:
+        try:
+            req_data = json.dumps({
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 50,
+                "messages": [{"role": "user", "content": "回覆OK"}]
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                'https://api.anthropic.com/v1/messages',
+                data=req_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'x-api-key': ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01',
+                }
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                working = 'anthropic-api'
+        except Exception as e:
+            errors.append(f"Anthropic: {e}")
+    else:
+        errors.append("Anthropic: no key")
+    # Test Gemini
+    if not working and GOOGLE_AI_API_KEY:
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=GOOGLE_AI_API_KEY)
+            response = client.models.generate_content(model='gemini-2.5-flash', contents='回覆OK')
+            if response.text:
+                working = 'gemini'
+        except Exception as e:
+            errors.append(f"Gemini: {e}")
+    elif not GOOGLE_AI_API_KEY:
+        errors.append("Gemini: no key")
+    return jsonify({'working': working, 'errors': errors})
 
 
 # ─── 爆文靈感助手 API ───
