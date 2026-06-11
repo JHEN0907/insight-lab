@@ -227,6 +227,12 @@ def run_claude(prompt, timeout=600):
                 if text:
                     print("🟢 使用 Anthropic API (Claude)", flush=True)
                     return text
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='ignore')
+            if 'credit balance' in body.lower():
+                print("⚠️ Anthropic API: 額度不足，請至 console.anthropic.com 儲值", flush=True)
+            else:
+                print(f"⚠️ Anthropic API HTTP {e.code}: {body[:200]}", flush=True)
         except Exception as e:
             print(f"⚠️ Anthropic API error: {e}", flush=True)
 
@@ -302,6 +308,12 @@ def debug_engine():
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 working = 'anthropic-api'
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='ignore')
+            if 'credit balance' in body.lower():
+                errors.append("Anthropic: 額度不足，請至 console.anthropic.com 儲值")
+            else:
+                errors.append(f"Anthropic: HTTP {e.code} - {body[:200]}")
         except Exception as e:
             errors.append(f"Anthropic: {e}")
     else:
