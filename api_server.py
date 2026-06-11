@@ -207,7 +207,7 @@ def run_claude(prompt, timeout=600):
     if ANTHROPIC_API_KEY:
         try:
             req_data = json.dumps({
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": 16000,
                 "messages": [{"role": "user", "content": prompt}]
             }).encode('utf-8')
@@ -287,7 +287,7 @@ def debug_engine():
     if ANTHROPIC_API_KEY:
         try:
             req_data = json.dumps({
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": 50,
                 "messages": [{"role": "user", "content": "回覆OK"}]
             }).encode('utf-8')
@@ -498,7 +498,7 @@ def _analyze_with_vision(prompt, images):
         content.append({"type": "text", "text": prompt})
 
         req_data = json.dumps({
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-6",
             "max_tokens": 4096,
             "messages": [{"role": "user", "content": content}]
         }).encode('utf-8')
@@ -920,7 +920,7 @@ def _ocr_image(base64_image):
             media_type = 'image/png'
 
         req_data = json.dumps({
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-4-6",
             "max_tokens": 1024,
             "messages": [{
                 "role": "user",
