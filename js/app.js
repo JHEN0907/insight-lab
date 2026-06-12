@@ -1909,11 +1909,22 @@ let currentCopy = '';
 let currentTopic = '';
 let currentPillar = '';
 let currentFormat = '';
+let currentPlatform = 'threads';
+
+// 平台選擇
+document.querySelectorAll('#platformPills .pill').forEach(function(pill) {
+  pill.addEventListener('click', function() {
+    document.querySelectorAll('#platformPills .pill').forEach(function(p) { p.classList.remove('active'); });
+    pill.classList.add('active');
+    currentPlatform = pill.dataset.value;
+  });
+});
 
 document.getElementById('generateCopyBtn').addEventListener('click', async () => {
   const pillar = document.querySelector('#pillarPills .pill.active')?.dataset.value || '八字';
   const format = document.getElementById('formatSelect').value;
   const topic = document.getElementById('copywriterInput').value.trim();
+  const platform = document.querySelector('#platformPills .pill.active')?.dataset.value || 'threads';
   const resultsEl = document.getElementById('copywriterResults');
 
   if (!topic) { document.getElementById('copywriterInput').focus(); return; }
@@ -1921,6 +1932,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
   currentTopic = topic;
   currentPillar = pillar;
   currentFormat = format;
+  currentPlatform = platform;
 
   const btn = document.getElementById('generateCopyBtn');
   btn.disabled = true;
@@ -1935,7 +1947,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
     setFlowStep(2);
 
     var apiResult = null;
-    try { apiResult = await apiCall(endpoint, { text: topic, pillar: pillar }); } catch(e) {}
+    try { apiResult = await apiCall(endpoint, { text: topic, pillar: pillar, platform: platform }); } catch(e) {}
 
     if (apiResult && apiResult.copy) {
       currentCopy = apiResult.copy;
@@ -1956,7 +1968,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
   // ── Step 1：生成 Hook 選項 ──
   let hooks = [];
   try {
-    const hookResult = await apiCall('/api/generate-hooks', { pillar, topic });
+    const hookResult = await apiCall('/api/generate-hooks', { pillar, topic, platform });
     if (hookResult && hookResult.hooks) hooks = hookResult.hooks;
   } catch (e) { console.log('Hook API error:', e.message); }
 
@@ -2052,7 +2064,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
     let copy = '', techniques = [], hookType = '', sources = [];
     if (selectedHook) {
       try {
-        const apiResult = await apiCall('/api/generate-with-hook', { pillar, format, topic, hook: selectedHook.text, attachments: uploadedFiles });
+        const apiResult = await apiCall('/api/generate-with-hook', { pillar, format, topic, hook: selectedHook.text, attachments: uploadedFiles, platform });
         if (apiResult && apiResult.copy) {
           copy = apiResult.copy;
           techniques = apiResult.techniques_used || [];
@@ -2064,7 +2076,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
 
     if (!copy) {
       try {
-        const apiResult = await apiCall('/api/generate-copy', { pillar, format, topic, attachments: uploadedFiles });
+        const apiResult = await apiCall('/api/generate-copy', { pillar, format, topic, attachments: uploadedFiles, platform });
         if (apiResult && apiResult.copy) {
           copy = apiResult.copy;
           techniques = apiResult.techniques_used || [];
@@ -2091,7 +2103,7 @@ document.getElementById('generateCopyBtn').addEventListener('click', async () =>
 
     let copy = '', techniques = [], hookType = '', sources2 = [];
     try {
-      const apiResult = await apiCall('/api/generate-copy', { pillar, format, topic, attachments: uploadedFiles });
+      const apiResult = await apiCall('/api/generate-copy', { pillar, format, topic, attachments: uploadedFiles, platform });
       if (apiResult && apiResult.copy) {
         copy = apiResult.copy;
         techniques = apiResult.techniques_used || [];

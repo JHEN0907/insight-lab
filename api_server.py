@@ -177,7 +177,8 @@ GOOGLE_AI_API_KEY = os.environ.get('GOOGLE_AI_API_KEY', '')
 
 
 def web_search(query, max_results=5):
-    """用 DuckDuckGo 搜尋，回傳 [{title, url, snippet}]"""
+    """用 DuckDuckGo 搜尋，失敗時用 Gemini grounding 備援"""
+    # 1. DuckDuckGo
     try:
         from ddgs import DDGS
         ddgs = DDGS()
@@ -188,10 +189,33 @@ def web_search(query, max_results=5):
                 'url': r.get('href', ''),
                 'snippet': r.get('body', '').replace('\n', ' '),
             })
-        return results
+        if results:
+            return results
     except Exception as e:
         print(f"⚠️ DuckDuckGo 搜尋失敗: {e}", flush=True)
-        return []
+
+    # 2. Gemini grounding 備援
+    api_key = GOOGLE_AI_API_KEY
+    if api_key:
+        try:
+            import google.genai as genai
+            from google.genai.types import Tool, GoogleSearch
+            client = genai.Client(api_key=api_key)
+            resp = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=f'搜尋「{query}」，列出前 {max_results} 個搜尋結果的標題和網址。用 JSON 陣列回覆：[{{"title":"...","url":"...","snippet":"..."}}]。只回 JSON。',
+                config={'tools': [Tool(google_search=GoogleSearch())]},
+            )
+            text = resp.text.strip() if resp.text else ''
+            if text.startswith('```'): text = text.split('\n', 1)[1]
+            if text.endswith('```'): text = text[:-3].strip()
+            if text.startswith('json'): text = text[4:].strip()
+            parsed = json.loads(text)
+            return [{'title': r.get('title',''), 'url': r.get('url',''), 'snippet': r.get('snippet','')} for r in parsed[:max_results]]
+        except Exception as e:
+            print(f"⚠️ Gemini 搜尋備援失敗: {e}", flush=True)
+
+    return []
 
 
 def _extract_claims(text):
@@ -409,6 +433,14 @@ def debug_engine():
     elif not GOOGLE_AI_API_KEY:
         errors.append("Gemini: no key")
     return jsonify({'working': working, 'errors': errors})
+
+
+@app.route('/api/debug-search')
+def debug_search():
+    """測試網頁搜尋功能"""
+    q = request.args.get('q', '八字十神')
+    results = web_search(q, max_results=3)
+    return jsonify({'query': q, 'count': len(results), 'results': results})
 
 
 # ─── 爆文靈感助手 API ───
@@ -1064,6 +1096,7 @@ def generate_copy():
     pillar = data.get('pillar', '八字')
     format_type = data.get('format', '')
     topic = data.get('topic', '')
+    platform = data.get('platform', 'threads')
     attachments = data.get('attachments', [])  # [{name, type, data}]
 
     if not topic and not format_type:
@@ -1075,9 +1108,28 @@ def generate_copy():
     search_context = verify['context']
     real_sources = verify['sources']
 
-    prompt = f"""你是 @jhen_insightlab 的文案寫手。請根據以下設定生成一篇 Threads 文案。
+    if platform == 'ig':
+        platform_rules = """## 平台：IG 輪播全文
+- 字數 300-800 字（比 Threads 更完整）
+- 第一行最重要（摘要預覽只顯示前 1-2 行）
+- 用 emoji 作為段落標記（🔮 / 📝 / 💻），但不要每句都加
+- 段落間用空行分隔
+- 結尾加 CTA 引導互動
+- 最後加 10-15 個 Hashtag（用 . 隔開放文末）
+- Hashtag 必含 #jhen_insightlab"""
+    else:
+        platform_rules = """## 平台：Threads 短文
+- 字數 100-300 字（最多 500）
+- 空氣感排版：每句獨立一行，不超過 25 字
+- emoji 最多 2 個
+- 不用 hashtag 堆疊
+- 結尾引發反思，不用制式 CTA"""
+
+    prompt = f"""你是 @jhen_insightlab 的文案寫手。請根據以下設定生成一篇{'IG 輪播' if platform == 'ig' else 'Threads'}文案。
 
 {BRAND_CONTEXT}
+
+{platform_rules}
 
 ## 設定
 - 主題支柱：{pillar}
@@ -1092,15 +1144,14 @@ def generate_copy():
 - 分析搜尋結果中的 Hook 手法、段落節奏、轉折技巧
 - 確認文案中涉及的事實/知識是否正確（特別是命理知識）
 
-## Step 3：{'統整素材 + ' if attachments else ''}生成文案
+## 生成文案
 {'⚠️ 重要：你必須保留用戶素材中的核心觀點、具體例子和個人經驗，不可丟棄任何細節。' if attachments else ''}
 必須套用：
 1. 震撼亮點前移 — 寫完後把最亮的金句搬到第一行
-2. 極致壓縮句型 — 每段 ≤ 3 行
-3. 餘韻設計 — 結尾引發反思，不用制式 CTA
-4. 消滅 AI 感 — emoji 最多 1 個，不用括號
-5. 自然植入主題標籤
-6. 字數 100-300 字（最多 500）
+2. 極致壓縮句型 — {'每段 ≤ 5 行' if platform == 'ig' else '每段 ≤ 3 行'}
+3. 餘韻設計 — 結尾引發反思{'或加 CTA 引導互動' if platform == 'ig' else '，不用制式 CTA'}
+4. 消滅 AI 感 — {'emoji 適量作段落標記' if platform == 'ig' else 'emoji 最多 2 個'}，不用括號
+{'5. 結尾加 10-15 個 Hashtag' if platform == 'ig' else '5. 自然植入主題標籤'}
 ⚠️ 核心精神：八字沒有好壞、十神也沒有。禁止武斷定論。禁止紫微斗數術語（空亡、化忌、飛星、煞星等）
 
 ## 輸出格式
@@ -2428,18 +2479,21 @@ def rewrite_original():
     data = request.json or {}
     original = data.get('text', '').strip()
     pillar = data.get('pillar', '八字')
+    platform = data.get('platform', 'threads')
     if not original:
         return jsonify({'error': '請輸入原稿'}), 400
 
-    verify = search_and_verify(pillar + ' ' + original[:50])
+    verify = search_and_verify(pillar + ' ' + original[:50], original)
     search_context = verify['context']
     real_sources = verify['sources']
+
+    platform_label = 'IG 輪播全文' if platform == 'ig' else 'Threads 短文'
 
     prompt = f"""你是 @jhen_insightlab 的文案改寫助手。
 
 {BRAND_CONTEXT}
 
-以下是用戶的原始想法。請用寫作技巧重新改寫成完整 Threads 文案。
+以下是用戶的原始想法。請用寫作技巧重新改寫成完整{platform_label}文案。
 
 ## 網頁搜尋結果（伺服器已搜尋，請參考確保正確性）
 {search_context if search_context else '（無搜尋結果）'}
@@ -2448,13 +2502,14 @@ def rewrite_original():
 1. 保留用戶所有具體例子和個人感受
 2. 保留核心觀點，不改變立場
 3. 可大幅改寫結構、補充內容、套用寫作技巧
-4. 字數 100-300 字（最多 500）
+4. {'字數 300-800 字' if platform == 'ig' else '字數 100-300 字（最多 500）'}
 5. 不加 markdown 格式，不用 ** 粗體
+{'6. 結尾加 10-15 個 Hashtag（含 #jhen_insightlab）' if platform == 'ig' else ''}
 
 ⚠️ 格式規則（必須嚴格遵守）：
-1. **空氣感排版**：每句話獨立一行，一行不超過 25 字
+1. **{'段落分明' if platform == 'ig' else '空氣感排版'}**：{'用 emoji 標記段落開頭，段落間空行' if platform == 'ig' else '每句話獨立一行，一行不超過 25 字'}
 2. **保留空行**：段落之間用空行分隔，保留原文的空行結構
-3. **emoji 整篇最多 2 個**
+3. **emoji {'適量作段落標記' if platform == 'ig' else '整篇最多 2 個'}**
 4. 不要把多個短句合併成一個長句
 
 原始想法：
